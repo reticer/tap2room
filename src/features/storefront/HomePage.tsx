@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabaseClient';
@@ -20,6 +21,7 @@ const CATEGORIES = [
 
 export const HomePage: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
   const removeItem = useCartStore(state => state.removeItem);
   const updateQuantity = useCartStore(state => state.updateQuantity);
@@ -63,8 +65,13 @@ export const HomePage: React.FC = () => {
   const cartTotal = getCartTotal();
 
   // Changed to 1 click as requested for easier dev access
-  const handleLogoClick = () => {
-    setAdminModalOpen(true);
+  const handleLogoClick = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      navigate('/admin');
+    } else {
+      setAdminModalOpen(true);
+    }
   };
 
   const containerVariants: Variants = {
@@ -81,10 +88,10 @@ export const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto min-h-screen bg-gray-50 dark:bg-gray-900 relative pb-24 shadow-2xl overflow-hidden">
+    <div className="max-w-7xl mx-auto min-h-screen bg-white dark:bg-black relative pb-24 shadow-2xl overflow-hidden">
       
       {/* 2. Sticky Glassmorphism Header */}
-      <header className="fixed top-0 w-full max-w-7xl z-40 bg-white/70 dark:bg-black/70 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50 pt-[env(safe-area-inset-top)]">
+      <header className="fixed top-0 w-full max-w-7xl z-40 bg-white/70 dark:bg-black/70 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50 pt-[48px] md:pt-[env(safe-area-inset-top)]">
         <div className="flex justify-between items-center h-14 px-4 md:px-8">
           {/* Empty spacer on mobile, hidden on desktop */}
           <div className="w-10 md:hidden"></div>
@@ -122,11 +129,11 @@ export const HomePage: React.FC = () => {
       </header>
 
       {/* Main Content padding-top to account for fixed header + safe area */}
-      <main className="pt-[calc(env(safe-area-inset-top)+4rem)]">
+      <main className="pt-[104px] md:pt-[calc(env(safe-area-inset-top)+4rem)]">
         
         {/* 3. Hero / Welcome Banner */}
         <div className="px-4 md:px-8 mb-6">
-          <div className="rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-800 p-6 md:p-10 shadow-sm border border-white/50 dark:border-gray-700 relative overflow-hidden">
+          <div className="rounded-[2rem] bg-gradient-to-br from-blue-50 via-white to-blue-50/50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 p-6 md:p-10 shadow-sm border border-gray-100 dark:border-gray-800 relative overflow-hidden">
             <div className="relative z-10 md:max-w-lg">
               <h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-2 md:mb-4 leading-tight">
                 {t('hero_title_1')} <br className="md:hidden" />{t('hero_title_2')}
@@ -141,15 +148,15 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* 4. Horizontal Scroll Categories */}
-        <div className="flex overflow-x-auto gap-3 px-4 md:px-8 pb-4 hide-scrollbar sticky top-[calc(env(safe-area-inset-top)+3.5rem)] z-30 bg-gray-50/90 dark:bg-gray-900/90 backdrop-blur-sm py-2">
+        <div className="flex overflow-x-auto gap-3 px-4 md:px-8 pb-4 hide-scrollbar sticky top-[104px] md:top-[calc(env(safe-area-inset-top)+3.5rem)] z-30 bg-white/90 dark:bg-black/90 backdrop-blur-sm py-2">
           {CATEGORIES.map(category => (
             <button
               key={category.id}
               onClick={() => setActiveCategory(category.id)}
-              className={`whitespace-nowrap rounded-full px-5 py-2 text-sm font-semibold transition-all transform active:scale-95 ${
+              className={`whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-semibold transition-all transform active:scale-95 ${
                 activeCategory === category.id 
                   ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-md' 
-                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 shadow-sm border border-gray-100 dark:border-gray-700'
+                  : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
             >
               {t(category.key)}
@@ -186,9 +193,9 @@ export const HomePage: React.FC = () => {
                 const quantityInCart = cartItem?.quantity || 0;
 
                 return (
-                <motion.div key={product.id} variants={itemVariants}>
+                <motion.div key={product.id} variants={itemVariants} whileTap={{ scale: 0.96 }}>
                   <div 
-                    className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 relative group overflow-hidden cursor-pointer"
+                    className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-md border border-gray-100 dark:border-gray-800 relative group overflow-hidden cursor-pointer transition-shadow"
                     onClick={() => setSelectedProduct(product)}
                   >
                     
@@ -218,27 +225,28 @@ export const HomePage: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="p-3 flex flex-col justify-between flex-grow pb-12 relative">
-                      <h3 className="font-semibold text-sm line-clamp-2 text-gray-800 dark:text-gray-100 leading-snug">
+                    <div className="p-3 flex-1 flex flex-col gap-2">
+                      <h3 className="font-semibold text-sm line-clamp-2 text-gray-800 dark:text-gray-100 leading-normal min-h-[3rem]">
                         {i18n.language === 'en' && product.name_en ? product.name_en : product.name_th}
                       </h3>
                       
-                      <div className="mt-2 flex flex-col justify-end h-full">
-                        {product.sale_price ? (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-bold text-base text-gray-900 dark:text-white">฿{product.sale_price.toLocaleString()}</span>
-                            <span className="font-medium text-gray-400 text-[10px] line-through">฿{product.price.toLocaleString()}</span>
-                          </div>
-                        ) : (
-                          <span className="font-bold text-base text-gray-900 dark:text-white">฿{product.price.toLocaleString()}</span>
-                        )}
-                      </div>
+                      <div className="mt-auto flex items-end justify-between gap-2">
+                        <div className="flex flex-col">
+                          {product.sale_price ? (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-extrabold text-lg leading-none text-ios-primary dark:text-blue-400">฿{product.sale_price.toLocaleString()}</span>
+                              <span className="font-medium text-gray-400 text-xs line-through">฿{product.price.toLocaleString()}</span>
+                            </div>
+                          ) : (
+                            <span className="font-extrabold text-lg leading-none text-ios-primary dark:text-blue-400">฿{product.price.toLocaleString()}</span>
+                          )}
+                        </div>
 
-                      {/* Add Button positioned at bottom right */}
-                      <div 
-                        className="absolute bottom-3 right-3 z-20 flex items-center"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                        {/* Add Button */}
+                        <div 
+                          className="flex items-center z-20 shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                         {quantityInCart === 0 ? (
                           <motion.button 
                             whileTap={{ scale: 0.9 }}
@@ -272,6 +280,7 @@ export const HomePage: React.FC = () => {
                             </motion.button>
                           </div>
                         )}
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -6,6 +6,7 @@ import { supabase } from '../../services/supabaseClient';
 import { UploadCloud, Check, X } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '../../utils/cropImage';
+import { useTranslation } from 'react-i18next';
 
 export interface ProductFormData {
   id?: string;
@@ -15,6 +16,7 @@ export interface ProductFormData {
   stock: number;
   image_url?: string;
   category?: string;
+  description_th?: string | null;
 }
 
 interface ProductFormModalProps {
@@ -25,11 +27,15 @@ interface ProductFormModalProps {
 }
 
 export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, onSuccess, product }) => {
+  const { i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
+  
   const [nameTh, setNameTh] = useState('');
   const [price, setPrice] = useState('');
   const [salePrice, setSalePrice] = useState('');
   const [stock, setStock] = useState('');
   const [category, setCategory] = useState('เครื่องดื่ม');
+  const [descriptionTh, setDescriptionTh] = useState('');
   
   // Image handling
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -54,6 +60,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
       setSalePrice(product.sale_price ? product.sale_price.toString() : '');
       setStock(product.stock !== undefined ? product.stock.toString() : '');
       setCategory(product.category || 'เครื่องดื่ม');
+      setDescriptionTh(product.description_th || '');
       setCroppedImageUrl(product.image_url || null);
     } else if (!isOpen) {
       // Reset when closed
@@ -62,6 +69,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
       setSalePrice('');
       setStock('');
       setCategory('เครื่องดื่ม');
+      setDescriptionTh('');
       setImageSrc(null);
       setCroppedImageFile(null);
       setCroppedImageUrl(null);
@@ -152,6 +160,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
         sale_price: salePrice ? parseFloat(salePrice) : null,
         stock: parseInt(stock, 10),
         category: category,
+        description_th: descriptionTh || null,
         image_url: finalImageUrl,
       };
 
@@ -232,7 +241,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
           ) : (
             <div className="flex flex-col items-center text-gray-500">
               <UploadCloud className="w-8 h-8 mb-2" />
-              <span className="text-sm font-medium">Upload Image</span>
+              <span className="text-sm font-medium">{isEn ? "Upload Image" : "อัปโหลดรูปภาพ"}</span>
             </div>
           )}
           <input 
@@ -246,30 +255,35 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
 
         {error && <div className="text-ios-danger text-sm font-bold p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-xl">{error}</div>}
 
-        <Input label="Product Name" value={nameTh} onChange={e => setNameTh(e.target.value)} required />
+        <Input label={isEn ? "Product Name" : "ชื่อสินค้า"} value={nameTh} onChange={e => setNameTh(e.target.value)} required />
+        <Input label={isEn ? "Product Description" : "รายละเอียดสินค้า"} value={descriptionTh} onChange={e => setDescriptionTh(e.target.value)} />
         
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Regular Price (฿)" type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} required />
-          <Input label="Sale Price (฿) (Optional)" type="number" step="0.01" value={salePrice} onChange={e => setSalePrice(e.target.value)} />
+          <Input label={isEn ? "Regular Price (฿)" : "ราคาปกติ (฿)"} type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} required />
+          <Input label={isEn ? "Sale Price (฿) (Optional)" : "ราคาลด (฿) (เว้นว่างได้)"} type="number" step="0.01" value={salePrice} onChange={e => setSalePrice(e.target.value)} />
         </div>
         
-        <Input label="Stock Amount" type="number" value={stock} onChange={e => setStock(e.target.value)} required />
-        
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Category</label>
-          <select 
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-base text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-primary/20 focus:border-ios-primary transition-all shadow-sm outline-none appearance-none"
-          >
-            <option value="เครื่องดื่ม">เครื่องดื่ม (Drinks)</option>
-            <option value="ของกินเล่น">ของกินเล่น (Snacks)</option>
-            <option value="ของใช้">ของใช้ (Essentials)</option>
-          </select>
+        <div className="grid grid-cols-2 gap-4">
+          <Input label={isEn ? "Stock Amount" : "จำนวนในสต็อก"} type="number" value={stock} onChange={e => setStock(e.target.value)} required />
+          
+          <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">{isEn ? "Category" : "หมวดหมู่"}</label>
+            <select 
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full bg-gray-50 dark:bg-gray-800/50 border border-transparent rounded-2xl h-12 px-4 text-base text-gray-900 dark:text-white focus:bg-white dark:focus:bg-gray-800 focus:border-gray-900 dark:focus:border-white focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 transition-all outline-none appearance-none cursor-pointer"
+            >
+              <option value="เครื่องดื่ม">{isEn ? "Drinks" : "เครื่องดื่ม"}</option>
+              <option value="ของกินเล่น">{isEn ? "Snacks" : "ของกินเล่น"}</option>
+              <option value="ของใช้">{isEn ? "Essentials" : "ของใช้"}</option>
+            </select>
+          </div>
         </div>
 
         <Button type="submit" fullWidth isLoading={isSubmitting} className="mt-2 text-lg font-bold">
-          {product ? "Save Changes" : "Save Product"}
+          {product 
+            ? (isEn ? "Save Changes" : "บันทึกการเปลี่ยนแปลง") 
+            : (isEn ? "Save Product" : "เพิ่มสินค้าใหม่")}
         </Button>
       </form>
     </Modal>

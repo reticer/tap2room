@@ -212,11 +212,11 @@ export const CartDrawer: React.FC = () => {
                     onChange={(e) => setRoomNumber(e.target.value)}
                     className={`w-full bg-white dark:bg-gray-800 border ${error ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-primary/20 focus:border-ios-primary transition-all shadow-sm outline-none appearance-none`}
                   >
-                    <option value="" disabled>{t('select_room_placeholder')}</option>
+                    <option value="" disabled>เลือกห้อง</option>
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16].map(num => (
                       <option key={num} value={`ห้อง ${num}`}>ห้อง {num}</option>
                     ))}
-                    <option value="ห้องล่างสุด">{t('room_lowest')}</option>
+                    <option value="ห้องล่างสุด">ห้องล่างสุด</option>
                   </select>
                   {error && <span className="text-xs font-bold text-red-500">{error}</span>}
                 </div>

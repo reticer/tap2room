@@ -64,7 +64,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
 
         {/* Details */}
         <div className="flex flex-col gap-2">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white leading-relaxed pt-1">
             {i18n.language === 'en' && product.name_en ? product.name_en : product.name_th}
           </h2>
           {/* Description support if available */}
@@ -73,14 +73,14 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
               {i18n.language === 'en' && product.description_en ? product.description_en : (product.description_th || t('product_desc_empty'))}
             </p>
           )}
-          <div className="flex items-center gap-3 mt-1">
+          <div className="flex items-center gap-3 mt-1 pt-1">
             {product.sale_price ? (
               <>
-                <span className="text-2xl font-bold text-ios-primary">฿{product.sale_price.toLocaleString()}</span>
+                <span className="text-2xl font-bold text-ios-primary leading-normal">฿{product.sale_price.toLocaleString()}</span>
                 <span className="text-sm font-medium text-gray-400 line-through mt-1">฿{product.price.toLocaleString()}</span>
               </>
             ) : (
-              <span className="text-2xl font-bold text-ios-primary">฿{product.price.toLocaleString()}</span>
+              <span className="text-2xl font-bold text-ios-primary leading-normal">฿{product.price.toLocaleString()}</span>
             )}
           </div>
           <p className="text-sm text-gray-500 font-medium">{product.stock} {t('stock_left')}</p>

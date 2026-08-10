@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 @theme {
+  --font-sans: 'Prompt', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  
   --color-ios-bg: #f2f2f7;
   --color-ios-darkBg: #000000;
   --color-ios-card: #ffffff;

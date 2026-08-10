@@ -5,6 +5,8 @@ CREATE TABLE products (
   name_en TEXT NOT NULL,
   price NUMERIC NOT NULL,
   image_url TEXT,
+  description_th TEXT,
+  description_en TEXT,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
