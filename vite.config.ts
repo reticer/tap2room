@@ -13,24 +13,30 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['favicon.ico', 'iconpwa.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Tap to Room',
-        short_name: 'Tap2Room',
+        name: 'tap2room',
+        short_name: 'tap2room',
         description: 'Smart e-commerce platform for your apartment',
         theme_color: '#f2f2f7',
         background_color: '#ffffff',
         display: 'standalone',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'iconpwa.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'iconpwa.png',
             sizes: '512x512',
             type: 'image/png'
+          },
+          {
+            src: 'iconpwa.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }

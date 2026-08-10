@@ -72,21 +72,28 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto min-h-screen bg-gray-50/50 dark:bg-gray-900 pb-[env(safe-area-inset-bottom)] overflow-hidden relative">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/70 dark:bg-black/70 backdrop-blur-md pt-[48px] md:pt-[env(safe-area-inset-top)] border-b border-gray-200/50 dark:border-gray-800/50 flex justify-between items-center h-16 px-4 md:px-8">
-        <h1 className="text-xl md:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-          Admin Dashboard
-        </h1>
-        <div className="flex items-center gap-2 md:gap-3">
-          <button 
-            onClick={() => i18n.changeLanguage(i18n.language === 'th' ? 'en' : 'th')}
-            className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center font-bold text-sm shadow-sm transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
-            title="Switch Language"
-          >
-            {i18n.language.toUpperCase()}
-          </button>
-          <button onClick={() => navigate('/')} className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full hover:bg-blue-100 transition-colors shadow-sm" title="Return to Home">
-            <Home className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          </button>
+      <header className="sticky top-0 z-40 bg-white/70 dark:bg-black/70 backdrop-blur-md pt-[48px] md:pt-[env(safe-area-inset-top)] border-b border-gray-200/50 dark:border-gray-800/50">
+        <div className="flex justify-between items-center h-16 px-4 md:px-8">
+          <div className="flex items-center text-xl md:text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white select-none">
+            <span className="mr-0.5">tap</span>
+            <div className="relative flex items-center justify-center bg-orange-500 w-[28px] h-[36px] rounded-t-[10px] rounded-b-[2px] border-b-[3px] border-orange-700 mx-0.5 shadow-sm">
+                <span className="text-white text-[22px] leading-none z-10 mt-[2px]">2</span>
+            </div>
+            <span className="ml-0.5">room</span>
+            <span className="ml-2.5 text-gray-400 dark:text-gray-500 font-semibold tracking-normal text-lg md:text-xl opacity-80">Admin</span>
+          </div>
+          <div className="flex items-center gap-2 md:gap-3">
+            <button 
+              onClick={() => i18n.changeLanguage(i18n.language === 'th' ? 'en' : 'th')}
+              className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center font-bold text-sm shadow-sm transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
+              title="Switch Language"
+            >
+              {i18n.language.toUpperCase()}
+            </button>
+            <button onClick={() => navigate('/')} className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full hover:bg-blue-100 transition-colors shadow-sm" title="Return to Home">
+              <Home className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </button>
+          </div>
         </div>
       </header>
 

@@ -1,6 +1,6 @@
 {
   "translation": {
-    "app_name": "Tap to Room",
+    "app_name": "tap2room",
     "cart": "Cart",
     "checkout": "Checkout",
     "room_number": "Room Number",
@@ -40,6 +40,9 @@
     "room_lowest": "Lowest Room",
     "product_details": "Product Details",
     "add_to_cart_btn": "Add to Cart",
-    "product_desc_empty": "No description available."
+    "product_desc_empty": "No description available.",
+    "confirm_cancel_order": "Are you sure you want to cancel this order?",
+    "confirm_complete_order": "Have you successfully delivered the order?",
+    "delivered_successfully": "Delivered"
   }
 }

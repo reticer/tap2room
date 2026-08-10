@@ -2,15 +2,81 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { Button } from '../../components/ui/Button';
 import { useTranslation } from 'react-i18next';
-import { Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import { Filter, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
+
+const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, subtitle, confirmText, cancelText, isDestructive }: any) => {
+  if (typeof window === 'undefined') return null;
+  return createPortal(
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: "spring", duration: 0.4, bounce: 0.2 }} className="bg-[#f9fafb] dark:bg-gray-800 rounded-3xl w-full max-w-[320px] relative z-10 shadow-2xl flex flex-col p-6 border border-gray-100 dark:border-gray-700/50">
+            <div className="flex flex-col items-center text-center">
+              {isDestructive ? (
+                <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+                  <AlertTriangle className="w-8 h-8 text-red-500" />
+                </div>
+              ) : (
+                <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mb-4">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                </div>
+              )}
+              
+              <h3 className="font-extrabold text-[1.15rem] text-gray-900 dark:text-white leading-snug mb-2">
+                {title}
+              </h3>
+              
+              {subtitle && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">
+                  {subtitle}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3 w-full">
+              <button 
+                onClick={onClose} 
+                className="flex-1 py-3.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-2xl transition-colors"
+              >
+                {cancelText}
+              </button>
+              <button 
+                onClick={() => { onConfirm(); onClose(); }} 
+                className={`flex-1 py-3.5 text-white font-bold rounded-2xl transition-colors shadow-sm ${
+                  isDestructive 
+                    ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20' 
+                    : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20'
+                }`}
+              >
+                {confirmText}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+};
+
 
 export const OrdersManager: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isEn = i18n.language === 'en';
   
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    orderId: string;
+    roomNumber: string;
+    action: 'cancelled' | 'completed';
+  }>({ isOpen: false, orderId: '', roomNumber: '', action: 'completed' });
   
   const [dateFilter, setDateFilter] = useState('all');
   
@@ -282,15 +348,15 @@ export const OrdersManager: React.FC = () => {
               <Button 
                 variant="secondary" 
                 className="flex-1 !rounded-xl !bg-rose-50 !text-rose-600 hover:!bg-rose-100 dark:!bg-rose-900/20 dark:!text-rose-400 dark:hover:!bg-rose-900/40"
-                onClick={() => updateStatus(order.id, 'cancelled', order.room_number)}
+                onClick={() => setConfirmState({ isOpen: true, orderId: order.id, roomNumber: order.room_number, action: 'cancelled' })}
               >
                 {isEn ? 'Cancel' : 'ยกเลิก'}
               </Button>
               <Button 
-                className="flex-1 !rounded-xl !bg-emerald-500 focus:ring-emerald-500/50 hover:bg-emerald-600 shadow-md"
-                onClick={() => updateStatus(order.id, 'completed', order.room_number)}
+                className="flex-1 !rounded-xl !bg-emerald-500 focus:ring-emerald-500/50 hover:bg-emerald-600 shadow-md px-1"
+                onClick={() => setConfirmState({ isOpen: true, orderId: order.id, roomNumber: order.room_number, action: 'completed' })}
               >
-                {isEn ? 'Complete' : 'เสร็จสิ้น'}
+                {t('delivered_successfully')}
               </Button>
             </div>
           )}
@@ -299,6 +365,20 @@ export const OrdersManager: React.FC = () => {
       </div>
           </div>
         ))}
+        <ConfirmDialog
+          isOpen={confirmState.isOpen}
+          onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={() => updateStatus(confirmState.orderId, confirmState.action, confirmState.roomNumber)}
+          title={confirmState.action === 'cancelled' ? t('confirm_cancel_order') : t('confirm_complete_order')}
+          subtitle={
+            confirmState.action === 'cancelled'
+              ? (isEn ? 'This action cannot be undone.' : 'ข้อมูลจะถูกลบออกจากระบบทันที')
+              : (isEn ? 'Confirm delivery of this order.' : 'ยืนยันการจัดส่งสินค้านี้')
+          }
+          confirmText={isEn ? 'Confirm' : 'ยืนยัน'}
+          cancelText={isEn ? 'Cancel' : 'ยกเลิก'}
+          isDestructive={confirmState.action === 'cancelled'}
+        />
     </div>
   );
 };

@@ -79,29 +79,29 @@ export const SettingsManager: React.FC = () => {
     <div className="flex flex-col gap-6 max-w-2xl mx-auto pb-20">
       <h2 className="font-bold text-2xl text-gray-900 dark:text-white px-2">{isEn ? 'Settings' : 'ตั้งค่าระบบ'}</h2>
       
-      <Card className="p-6 flex flex-col gap-6">
+      <Card className="p-4 flex flex-col gap-4">
         
         {/* Notification Settings */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
-              <Bell className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+              <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-gray-900 dark:text-white">{isEn ? 'Notifications' : 'การแจ้งเตือน'}</h3>
-              <p className="text-sm text-gray-500">{isEn ? 'Receive notifications for new orders' : 'รับการแจ้งเตือนเมื่อมีออเดอร์ใหม่'}</p>
+              <h3 className="font-bold text-base text-gray-900 dark:text-white">{isEn ? 'Notifications' : 'การแจ้งเตือน'}</h3>
+              <p className="text-xs text-gray-500">{isEn ? 'Receive notifications for new orders' : 'รับการแจ้งเตือนเมื่อมีออเดอร์ใหม่'}</p>
             </div>
           </div>
           
           {/* Toggle Switch */}
           <button 
             onClick={handleTogglePush}
-            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               pushEnabled ? 'bg-ios-primary' : 'bg-gray-300 dark:bg-gray-600'
             }`}
           >
             <span 
-              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                 pushEnabled ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
@@ -124,18 +124,18 @@ export const SettingsManager: React.FC = () => {
 
         {/* Activity Log */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
-              <Activity className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
+              <Activity className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-gray-900 dark:text-white">{isEn ? 'Activity Log' : 'ประวัติกิจกรรม'}</h3>
-              <p className="text-sm text-gray-500">{isEn ? 'View login and order history' : 'ดูประวัติการเข้าสู่ระบบและออเดอร์'}</p>
+              <h3 className="font-bold text-base text-gray-900 dark:text-white">{isEn ? 'Activity Log' : 'ประวัติกิจกรรม'}</h3>
+              <p className="text-xs text-gray-500">{isEn ? 'View login and order history' : 'ดูประวัติการเข้าสู่ระบบและออเดอร์'}</p>
             </div>
           </div>
           <button 
             onClick={handleOpenActivityLog}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-semibold rounded-xl transition-colors"
+            className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-semibold rounded-xl transition-colors"
           >
             {isEn ? 'View' : 'เปิดดู'}
           </button>
@@ -145,18 +145,18 @@ export const SettingsManager: React.FC = () => {
 
         {/* Logout */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
-              <LogOut className="w-6 h-6 text-red-600 dark:text-red-400" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
+              <LogOut className="w-5 h-5 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-red-600 dark:text-red-400">{isEn ? 'Logout' : 'ออกจากระบบ'}</h3>
-              <p className="text-sm text-gray-500">{isEn ? 'Sign out from the admin dashboard' : 'ออกจากระบบการจัดการร้านค้า'}</p>
+              <h3 className="font-bold text-base text-red-600 dark:text-red-400">{isEn ? 'Logout' : 'ออกจากระบบ'}</h3>
+              <p className="text-xs text-gray-500">{isEn ? 'Sign out from the admin dashboard' : 'ออกจากระบบการจัดการร้านค้า'}</p>
             </div>
           </div>
           <button 
             onClick={handleLogout}
-            className="px-4 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 font-bold rounded-xl transition-colors shadow-sm"
+            className="px-3 py-1.5 text-sm bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 font-bold rounded-xl transition-colors shadow-sm"
           >
             {isEn ? 'Logout' : 'ออกจากระบบ'}
           </button>

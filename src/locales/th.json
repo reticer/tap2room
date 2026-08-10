@@ -1,6 +1,6 @@
 {
   "translation": {
-    "app_name": "Tap to Room",
+    "app_name": "tap2room",
     "cart": "ตะกร้าสินค้า",
     "checkout": "ชำระเงิน",
     "room_number": "หมายเลขห้อง",
@@ -40,6 +40,9 @@
     "room_lowest": "ห้องล่างสุด",
     "product_details": "รายละเอียดสินค้า",
     "add_to_cart_btn": "หยิบใส่ตะกร้า",
-    "product_desc_empty": "ไม่มีรายละเอียดสินค้า"
+    "product_desc_empty": "ไม่มีรายละเอียดสินค้า",
+    "confirm_cancel_order": "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกคำสั่งซื้อนี้?",
+    "confirm_complete_order": "คุณจัดส่งสำเร็จแล้วหรือยัง?",
+    "delivered_successfully": "จัดส่งสำเร็จ"
   }
 }

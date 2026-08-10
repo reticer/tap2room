@@ -138,6 +138,9 @@ export const CartDrawer: React.FC = () => {
   };
 
   const total = getCartTotal();
+  const originalTotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const hasDiscount = originalTotal > total;
+  
   const qrPayload = generatePayload(PROMPTPAY_ID, { amount: total });
 
   return (
@@ -178,9 +181,16 @@ export const CartDrawer: React.FC = () => {
                       <h4 className="font-semibold text-sm line-clamp-1 text-gray-800 dark:text-gray-100">
                         {i18n.language === 'en' && item.name_en ? item.name_en : item.name_th}
                       </h4>
-                      <p className="text-ios-primary font-bold mt-0.5">
-                        ฿{item.sale_price ? item.sale_price.toLocaleString() : item.price.toLocaleString()}
-                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {item.sale_price ? (
+                          <>
+                            <span className="text-gray-400 line-through text-xs font-medium">฿{item.price.toLocaleString()}</span>
+                            <span className="text-ios-primary font-bold">฿{item.sale_price.toLocaleString()}</span>
+                          </>
+                        ) : (
+                          <span className="text-ios-primary font-bold">฿{item.price.toLocaleString()}</span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-full px-1 py-1 border border-gray-200/50 dark:border-gray-700">
                       <button 
@@ -212,7 +222,7 @@ export const CartDrawer: React.FC = () => {
                     onChange={(e) => setRoomNumber(e.target.value)}
                     className={`w-full bg-white dark:bg-gray-800 border ${error ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-primary/20 focus:border-ios-primary transition-all shadow-sm outline-none appearance-none`}
                   >
-                    <option value="" disabled>เลือกห้อง</option>
+                    <option value="" disabled>{t('select_room_placeholder')}</option>
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16].map(num => (
                       <option key={num} value={`ห้อง ${num}`}>ห้อง {num}</option>
                     ))}
@@ -237,7 +247,7 @@ export const CartDrawer: React.FC = () => {
                     onClick={() => setPaymentMethod('promptpay')}
                     className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all ${
                       paymentMethod === 'promptpay' 
-                        ? 'border-ios-primary bg-blue-50 dark:bg-ios-primary/10 text-ios-primary font-bold' 
+                        ? 'border-ios-primary bg-orange-50 dark:bg-ios-primary/10 text-ios-primary font-bold' 
                         : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 font-semibold'
                     }`}
                   >
@@ -264,7 +274,12 @@ export const CartDrawer: React.FC = () => {
               
               <div className="flex justify-between items-center text-xl font-extrabold mt-2 border-t border-gray-100 dark:border-gray-800 pt-4">
                 <span>{t('total')}</span>
-                <span className="text-ios-primary text-2xl">฿{total.toLocaleString()}</span>
+                <div className="flex items-center gap-3">
+                  {hasDiscount && (
+                    <span className="text-gray-400 line-through text-lg font-medium">฿{originalTotal.toLocaleString()}</span>
+                  )}
+                  <span className="text-ios-primary text-2xl">฿{total.toLocaleString()}</span>
+                </div>
               </div>
               
               <Button fullWidth size="lg" onClick={handleCheckout} className="shadow-lg shadow-ios-primary/30 mt-2 font-bold text-lg">

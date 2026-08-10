@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Prompt', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   
@@ -9,7 +11,7 @@
   --color-ios-darkCard: #1c1c1e;
   --color-ios-text: #000000;
   --color-ios-darkText: #ffffff;
-  --color-ios-primary: #007aff;
+  --color-ios-primary: #f97316;
   --color-ios-success: #34c759;
   --color-ios-danger: #ff3b30;
 

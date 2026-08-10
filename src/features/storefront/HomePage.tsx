@@ -88,20 +88,27 @@ export const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto min-h-screen bg-white dark:bg-black relative pb-24 shadow-2xl overflow-hidden">
+    <div className="max-w-5xl mx-auto min-h-screen bg-gray-50 dark:bg-black relative pb-32 shadow-2xl overflow-hidden">
       
       {/* 2. Sticky Glassmorphism Header */}
-      <header className="fixed top-0 w-full max-w-7xl z-40 bg-white/70 dark:bg-black/70 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50 pt-[48px] md:pt-[env(safe-area-inset-top)]">
+      <header className="fixed top-0 w-full max-w-5xl z-40 bg-white/70 dark:bg-black/70 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50 pt-[48px] md:pt-[env(safe-area-inset-top)]">
         <div className="flex justify-between items-center h-14 px-4 md:px-8">
           {/* Empty spacer on mobile, hidden on desktop */}
           <div className="w-10 md:hidden"></div>
           
-          <h1 
-            className="text-lg md:text-xl font-extrabold tracking-tight cursor-pointer select-none bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0"
+          <div 
+            className="flex items-center text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white select-none cursor-pointer hover:opacity-80 transition-opacity absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0"
             onClick={handleLogoClick}
           >
-            {t('app_name')}
-          </h1>
+            <span className="mr-0.5">tap</span>
+            
+            {/* บานประตูแบบมินิมอล (ไม่มีลูกบิด + เลข 2 อยู่ตรงกลางพอดี) */}
+            <div className="relative flex items-center justify-center bg-orange-500 w-[28px] h-[36px] rounded-t-[10px] rounded-b-[2px] border-b-[3px] border-orange-700 mx-0.5 shadow-sm">
+                <span className="text-white text-[22px] leading-none z-10 mt-[2px]">2</span>
+            </div>
+            
+            <span className="ml-0.5">room</span>
+          </div>
           
           <div className="flex items-center gap-3">
             <button 
@@ -132,34 +139,33 @@ export const HomePage: React.FC = () => {
       <main className="pt-[104px] md:pt-[calc(env(safe-area-inset-top)+4rem)]">
         
         {/* 3. Hero / Welcome Banner */}
-        <div className="px-4 md:px-8 mb-6">
-          <div className="rounded-[2rem] bg-gradient-to-br from-blue-50 via-white to-blue-50/50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 p-6 md:p-10 shadow-sm border border-gray-100 dark:border-gray-800 relative overflow-hidden">
-            <div className="relative z-10 md:max-w-lg">
-              <h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-2 md:mb-4 leading-tight">
-                {t('hero_title_1')} <br className="md:hidden" />{t('hero_title_2')}
+        <div className="px-4 pt-4 mb-6">
+          <div className="bg-gradient-to-br from-orange-50 to-amber-100 rounded-[1.5rem] p-6 shadow-sm border border-orange-100 relative overflow-hidden">
+            <div className="relative z-10">
+              <h2 className="text-xl md:text-2xl font-bold text-orange-900 leading-tight mb-2">
+                หิวไหม?<br/>สั่งเลยเดี๋ยวไปส่ง 🛵
               </h2>
-              <p className="text-sm md:text-base font-medium text-gray-600 dark:text-gray-300 mt-2">
-                {t('hero_subtitle')}
+              <p className="text-sm md:text-base text-orange-700/80 font-medium">
+                ส่งไว ส่งตรงถึงหน้าห้องคุณ
               </p>
             </div>
-            {/* Decorative shape */}
-            <div className="absolute -right-6 -bottom-6 md:right-10 md:-bottom-20 w-32 md:w-64 h-32 md:h-64 bg-blue-200/50 dark:bg-gray-700/50 rounded-full blur-2xl md:blur-3xl"></div>
+            <div className="absolute -right-4 -bottom-4 text-7xl md:text-8xl opacity-20 transform rotate-12">🛍️</div>
           </div>
         </div>
 
         {/* 4. Horizontal Scroll Categories */}
-        <div className="flex overflow-x-auto gap-3 px-4 md:px-8 pb-4 hide-scrollbar sticky top-[104px] md:top-[calc(env(safe-area-inset-top)+3.5rem)] z-30 bg-white/90 dark:bg-black/90 backdrop-blur-sm py-2">
+        <div className="flex overflow-x-auto gap-2 px-4 mb-6 hide-scrollbar pb-1 sticky top-[104px] md:top-[calc(env(safe-area-inset-top)+3.5rem)] z-30 bg-gray-50/90 dark:bg-black/90 backdrop-blur-sm pt-2">
           {CATEGORIES.map(category => (
             <button
               key={category.id}
               onClick={() => setActiveCategory(category.id)}
-              className={`whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-semibold transition-all transform active:scale-95 ${
+              className={`whitespace-nowrap px-5 py-2 text-sm font-medium transition-all transform active:scale-95 ${
                 activeCategory === category.id 
-                  ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-md' 
-                  : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  ? 'bg-orange-500 text-white rounded-full shadow-md' 
+                  : 'bg-white text-gray-600 hover:bg-orange-50 hover:text-orange-600 rounded-full border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
               }`}
             >
-              {t(category.key)}
+              {category.id}
             </button>
           ))}
         </div>
@@ -186,7 +192,7 @@ export const HomePage: React.FC = () => {
               variants={containerVariants}
               initial="hidden"
               animate="show"
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 px-4 md:px-8"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 px-4"
             >
               {products?.filter(p => activeCategory === 'ทั้งหมด' || p.category === activeCategory).map((product) => {
                 const cartItem = cartItems.find(item => item.id === product.id);
@@ -195,11 +201,11 @@ export const HomePage: React.FC = () => {
                 return (
                 <motion.div key={product.id} variants={itemVariants} whileTap={{ scale: 0.96 }}>
                   <div 
-                    className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-md border border-gray-100 dark:border-gray-800 relative group overflow-hidden cursor-pointer transition-shadow"
+                    className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 flex flex-col h-full overflow-hidden group relative cursor-pointer dark:bg-gray-800 dark:border-gray-800"
                     onClick={() => setSelectedProduct(product)}
                   >
                     
-                    <div className="aspect-square bg-gray-50 dark:bg-gray-900 relative">
+                    <div className="w-full aspect-square bg-orange-50/50 dark:bg-gray-900 flex items-center justify-center relative">
                       {product.image_url ? (
                         <img 
                           src={product.image_url} 
@@ -225,20 +231,20 @@ export const HomePage: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="p-3 flex-1 flex flex-col gap-2">
-                      <h3 className="font-semibold text-sm line-clamp-2 text-gray-800 dark:text-gray-100 leading-normal min-h-[3rem]">
+                    <div className="p-3 flex-1 flex flex-col">
+                      <h3 className="text-[13px] md:text-sm font-medium text-gray-800 leading-snug line-clamp-2 min-h-[2.75rem] md:min-h-[3rem] dark:text-gray-100">
                         {i18n.language === 'en' && product.name_en ? product.name_en : product.name_th}
                       </h3>
                       
-                      <div className="mt-auto flex items-end justify-between gap-2">
+                      <div className="mt-auto pt-3 flex items-end justify-between">
                         <div className="flex flex-col">
                           {product.sale_price ? (
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-extrabold text-lg leading-none text-ios-primary dark:text-blue-400">฿{product.sale_price.toLocaleString()}</span>
-                              <span className="font-medium text-gray-400 text-xs line-through">฿{product.price.toLocaleString()}</span>
+                              <span className="text-orange-600 font-bold text-lg md:text-xl leading-none">฿{product.sale_price.toLocaleString()}</span>
+                              <span className="font-medium text-gray-400 text-sm line-through">฿{product.price.toLocaleString()}</span>
                             </div>
                           ) : (
-                            <span className="font-extrabold text-lg leading-none text-ios-primary dark:text-blue-400">฿{product.price.toLocaleString()}</span>
+                            <span className="text-orange-600 font-bold text-lg md:text-xl leading-none">฿{product.price.toLocaleString()}</span>
                           )}
                         </div>
 
@@ -250,10 +256,10 @@ export const HomePage: React.FC = () => {
                         {quantityInCart === 0 ? (
                           <motion.button 
                             whileTap={{ scale: 0.9 }}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center shadow-md ${
+                            className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
                               product.stock === 0 
                                 ? 'bg-gray-200 text-gray-400 dark:bg-gray-700 cursor-not-allowed' 
-                                : 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 hover:bg-gray-800'
+                                : 'bg-orange-500 hover:bg-orange-600 text-white transition-colors'
                             }`}
                             onClick={() => product.stock > 0 && addItem(product)}
                             disabled={product.stock === 0}
@@ -261,7 +267,7 @@ export const HomePage: React.FC = () => {
                             <Plus className="w-5 h-5" />
                           </motion.button>
                         ) : (
-                          <div className="flex items-center bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full h-8 shadow-md">
+                          <div className="flex items-center bg-orange-500 text-white rounded-full h-8 shadow-sm">
                             <motion.button 
                               whileTap={{ scale: 0.9 }}
                               onClick={() => quantityInCart > 1 ? updateQuantity(product.id, quantityInCart - 1) : removeItem(product.id)}
@@ -300,10 +306,10 @@ export const HomePage: React.FC = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[calc(28rem-2rem)] z-50 mb-[env(safe-area-inset-bottom)]"
+            className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-50 mb-[env(safe-area-inset-bottom)]"
           >
             <div 
-              className="bg-gray-900 dark:bg-gray-800 text-white rounded-full p-1 shadow-2xl flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform border border-gray-800 dark:border-gray-700"
+              className="bg-orange-500 text-white rounded-2xl p-3 px-4 shadow-lg flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform"
               onClick={() => setCartOpen(true)}
             >
               <div className="flex items-center">
@@ -318,7 +324,7 @@ export const HomePage: React.FC = () => {
                   <span className="text-sm font-bold tracking-wide">฿{cartTotal.toLocaleString()}</span>
                 </div>
               </div>
-              <div className="bg-white text-gray-900 px-5 py-2.5 rounded-full mr-1 font-bold text-sm flex items-center gap-1">
+              <div className="bg-white text-orange-600 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1 shadow-sm">
                 {t('checkout')}
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />

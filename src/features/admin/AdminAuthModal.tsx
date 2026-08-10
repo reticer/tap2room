@@ -9,8 +9,7 @@ import { supabase } from '../../services/supabaseClient';
 export const AdminAuthModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  // DEV ONLY: Pre-filled password for convenience
-  const [password, setPassword] = useState('tap2room');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
