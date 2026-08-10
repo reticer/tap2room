@@ -9,6 +9,7 @@ import { CartDrawer } from '../cart/CartDrawer';
 import { AdminAuthModal } from '../admin/AdminAuthModal';
 import { ProductDetailsModal } from './ProductDetailsModal';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 
 const CATEGORIES = [
   { id: 'ทั้งหมด', key: 'cat_all' },
@@ -66,7 +67,7 @@ export const HomePage: React.FC = () => {
     setAdminModalOpen(true);
   };
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -74,7 +75,7 @@ export const HomePage: React.FC = () => {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
   };

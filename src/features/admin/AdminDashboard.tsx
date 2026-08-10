@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { useTranslation } from 'react-i18next';
-import { Bell, LogOut, Package, ShoppingCart } from 'lucide-react';
+import { LogOut, Package, ShoppingCart } from 'lucide-react';
 import { OrdersManager } from './OrdersManager';
 import { ProductsManager } from './ProductsManager';
 import { SettingsManager } from './SettingsManager';
@@ -57,9 +57,7 @@ export const AdminDashboard: React.FC = () => {
     navigate('/');
   };
 
-  const handleSubscribePush = async () => {
-    // Stub
-  };
+
 
   if (!session) return null; // or loading spinner
 
