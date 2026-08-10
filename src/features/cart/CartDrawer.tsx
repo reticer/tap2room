@@ -30,8 +30,26 @@ export const CartDrawer: React.FC = () => {
   const [isCodModalOpen, setCodModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [promptPayId, setPromptPayId] = useState('0000000000'); // Fallback while loading
 
-  const PROMPTPAY_ID = "0801234567";
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('id', 'promptpay_id')
+          .single();
+        
+        if (!error && data?.value) {
+          setPromptPayId(data.value);
+        }
+      } catch (err) {
+        console.error('Error fetching promptpay settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handleCheckout = () => {
     if (!roomNumber.trim()) {
@@ -141,7 +159,7 @@ export const CartDrawer: React.FC = () => {
   const originalTotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const hasDiscount = originalTotal > total;
   
-  const qrPayload = generatePayload(PROMPTPAY_ID, { amount: total });
+  const qrPayload = generatePayload(promptPayId, { amount: total });
 
   return (
     <>
@@ -311,12 +329,22 @@ export const CartDrawer: React.FC = () => {
           </motion.div>
         ) : (
           <div className="flex flex-col items-center gap-6 py-4">
+            <div className="text-center px-4 bg-orange-50 dark:bg-orange-900/20 py-3 rounded-xl border border-orange-100 dark:border-orange-800 w-full">
+              <p className="text-sm font-semibold text-orange-800 dark:text-orange-200 leading-relaxed">
+                {t('qr_instruction_1')}<br/>
+                {t('qr_instruction_2')}<br/>
+                <span className="text-red-500 font-bold mt-1 inline-block">{t('qr_instruction_3')}</span>
+              </p>
+            </div>
+            
             <div className="p-5 bg-white rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100">
               <QRCodeSVG value={qrPayload} size={220} />
             </div>
-            <div className="text-center">
-              <p className="text-sm text-gray-500 mb-1 font-medium tracking-wide uppercase">PromptPay QR</p>
+            
+            <div className="text-center flex flex-col gap-1">
+              <p className="text-sm text-gray-500 font-medium tracking-wide uppercase">PromptPay QR</p>
               <p className="font-extrabold text-3xl tracking-tight text-ios-primary">฿{total.toLocaleString()}</p>
+              <p className="font-bold text-gray-800 dark:text-gray-200 text-lg mt-1">{t('account_name')}</p>
             </div>
             <Button 
               fullWidth 
@@ -353,6 +381,13 @@ export const CartDrawer: React.FC = () => {
           </motion.div>
         ) : (
           <div className="flex flex-col gap-6 py-4">
+            <div className="text-center px-4 bg-green-50 dark:bg-green-900/20 py-3 rounded-xl border border-green-100 dark:border-green-800">
+              <p className="text-sm font-semibold text-green-800 dark:text-green-200 leading-relaxed">
+                {t('cod_instruction_1')}<br/>
+                {t('cod_instruction_2')}
+              </p>
+            </div>
+
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-2xl flex items-center gap-4">
               <div className="bg-green-100 dark:bg-green-800 p-3 rounded-full text-green-600 dark:text-green-300">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
