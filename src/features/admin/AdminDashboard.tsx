@@ -72,7 +72,7 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto min-h-screen bg-gray-50/50 dark:bg-gray-900 pb-[env(safe-area-inset-bottom)] overflow-hidden relative">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/70 dark:bg-black/70 backdrop-blur-md pt-[48px] md:pt-[env(safe-area-inset-top)] border-b border-gray-200/50 dark:border-gray-800/50">
+      <header className="sticky top-0 z-40 bg-white/70 dark:bg-black/70 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50">
         <div className="flex justify-between items-center h-16 px-4 md:px-8">
           <div className="flex items-center text-xl md:text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white select-none">
             <span className="mr-0.5">tap</span>

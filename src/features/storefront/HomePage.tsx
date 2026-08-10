@@ -64,13 +64,28 @@ export const HomePage: React.FC = () => {
   const cartItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const cartTotal = getCartTotal();
 
-  // Changed to 1 click as requested for easier dev access
+  // Click counter for hidden admin access (requires 5 clicks)
+  const clickCountRef = React.useRef(0);
+  const clickTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleLogoClick = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      navigate('/admin');
-    } else {
-      setAdminModalOpen(true);
+    clickCountRef.current += 1;
+    
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+    clickTimerRef.current = setTimeout(() => {
+      clickCountRef.current = 0;
+    }, 1500);
+
+    if (clickCountRef.current >= 5) {
+      clickCountRef.current = 0;
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/admin');
+      } else {
+        setAdminModalOpen(true);
+      }
     }
   };
 
@@ -91,7 +106,7 @@ export const HomePage: React.FC = () => {
     <div className="max-w-5xl mx-auto min-h-screen bg-gray-50 dark:bg-black relative pb-32 shadow-2xl overflow-hidden">
       
       {/* 2. Sticky Glassmorphism Header */}
-      <header className="fixed top-0 w-full max-w-5xl z-40 bg-white/70 dark:bg-black/70 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50 pt-[48px] md:pt-[env(safe-area-inset-top)]">
+      <header className="fixed top-0 w-full max-w-5xl z-40 bg-white/70 dark:bg-black/70 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50">
         <div className="flex justify-between items-center h-14 px-4 md:px-8">
           {/* Empty spacer on mobile, hidden on desktop */}
           <div className="w-10 md:hidden"></div>
@@ -136,7 +151,7 @@ export const HomePage: React.FC = () => {
       </header>
 
       {/* Main Content padding-top to account for fixed header + safe area */}
-      <main className="pt-[104px] md:pt-[calc(env(safe-area-inset-top)+4rem)]">
+      <main className="pt-14 md:pt-[calc(env(safe-area-inset-top)+3.5rem)]">
         
         {/* 3. Hero / Welcome Banner */}
         <div className="px-4 pt-4 mb-6">
@@ -154,7 +169,7 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* 4. Horizontal Scroll Categories */}
-        <div className="flex overflow-x-auto gap-2 px-4 mb-6 hide-scrollbar pb-1 sticky top-[104px] md:top-[calc(env(safe-area-inset-top)+3.5rem)] z-30 bg-gray-50/90 dark:bg-black/90 backdrop-blur-sm pt-2">
+        <div className="flex overflow-x-auto gap-2 px-4 mb-6 hide-scrollbar pb-1 sticky top-14 md:top-[calc(env(safe-area-inset-top)+3.5rem)] z-30 bg-gray-50/90 dark:bg-black/90 backdrop-blur-sm pt-2">
           {CATEGORIES.map(category => (
             <button
               key={category.id}
