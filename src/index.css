@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ios-bg: #f2f2f7;
+  --color-ios-darkBg: #000000;
+  --color-ios-card: #ffffff;
+  --color-ios-darkCard: #1c1c1e;
+  --color-ios-text: #000000;
+  --color-ios-darkText: #ffffff;
+  --color-ios-primary: #007aff;
+  --color-ios-success: #34c759;
+  --color-ios-danger: #ff3b30;
+
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+
+  --shadow-ios: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --shadow-ios-dark: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+@layer base {
+  :root {
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  html, body {
+    @apply antialiased text-ios-text bg-ios-bg dark:text-ios-darkText dark:bg-ios-darkBg;
+    /* Prevent overscroll bounce on iOS */
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
