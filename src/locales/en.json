@@ -49,6 +49,7 @@
     "qr_instruction_3": "Verify account name before transferring",
     "account_name": "นายวรรณรัชต์ สกุลศึก",
     "cod_instruction_1": "When ready, please tap \"Confirm Order\"",
-    "cod_instruction_2": "We will deliver the items to your room shortly."
+    "cod_instruction_2": "We will deliver the items to your room shortly.",
+    "status_pending": "Pending"
   }
 }

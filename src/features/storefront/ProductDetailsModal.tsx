@@ -47,10 +47,10 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t('product_details')}>
+    <Modal isOpen={isOpen} onClose={onClose} title={t('product_details')} bgClass="bg-orange-50/80 dark:bg-gray-900">
       <div className="flex flex-col gap-4">
-        <div className="relative">
-          <div className="w-full aspect-square bg-orange-50/50 dark:bg-gray-900 relative overflow-hidden rounded-2xl">
+        <div className="relative px-6">
+          <div className="w-full aspect-square bg-white dark:bg-gray-800 relative overflow-hidden rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-orange-100/50 dark:border-gray-700">
             {product.image_url ? (
               <img src={getOptimizedImageUrl(product.image_url, 600, 85)} alt={product.name_th} className={`absolute inset-0 w-full h-full object-contain ${product.stock === 0 ? 'grayscale opacity-60' : ''}`} />
             ) : (
@@ -101,10 +101,10 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
               whileTap={{ scale: 0.95 }}
               onClick={handleAdd}
               disabled={product.stock === 0}
-              className={`w-full py-4 rounded-full font-bold flex items-center justify-center gap-2 text-lg shadow-sm transition-colors ${
+              className={`w-full py-4 rounded-full font-bold flex items-center justify-center gap-2 text-lg shadow-sm transition-all duration-200 ${
                 product.stock === 0
                   ? 'bg-gray-200 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed'
-                  : 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100'
+                  : 'bg-orange-500 text-white hover:bg-orange-600 active:bg-orange-700 shadow-md shadow-orange-500/20'
               }`}
             >
               <ShoppingBag className="w-5 h-5" />

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useCartStore } from '../../store/useCartStore';
 import { BottomSheet } from '../../components/ui/BottomSheet';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
 import generatePayload from 'promptpay-qr';
@@ -158,6 +157,7 @@ export const CartDrawer: React.FC = () => {
         isOpen={isCartOpen}
         onClose={() => setCartOpen(false)}
         title={t('cart')}
+        bgClass="bg-[#FFFDF9] dark:bg-gray-900"
       >
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-gray-400">
@@ -226,17 +226,17 @@ export const CartDrawer: React.FC = () => {
             </div>
 
             {/* Fade effect for scroll */}
-            <div className="w-full h-10 bg-gradient-to-t from-white dark:from-ios-darkCard to-transparent pointer-events-none -mt-10 z-10 relative" />
+            <div className="w-full h-10 bg-gradient-to-t from-[#FFFDF9] dark:from-gray-900 to-transparent pointer-events-none -mt-10 z-10 relative" />
 
             {/* Pinned checkout section - always visible at bottom */}
-            <div className="relative z-20 flex-shrink-0 border-t border-gray-100 dark:border-gray-800 px-6 pt-4 pb-6 bg-ios-card dark:bg-ios-darkCard flex flex-col gap-4">
-              <div className="flex flex-col gap-4">
-                <div className="w-full flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('room_number')}</label>
+            <div className="relative z-20 flex-shrink-0 border-t border-orange-100/50 dark:border-gray-800 px-6 pt-3 pb-5 bg-[#FFFDF9] dark:bg-gray-900 flex flex-col gap-3">
+              <div className="flex gap-3 items-end">
+                <div className="w-[35%] flex flex-col gap-1">
+                  <label className="text-[13px] font-semibold text-gray-700 dark:text-gray-300 truncate">{t('room_number')}</label>
                   <select
                     value={roomNumber}
                     onChange={(e) => setRoomNumber(e.target.value)}
-                    className={`w-full bg-white dark:bg-gray-800 border ${error ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-primary/20 focus:border-ios-primary transition-all shadow-sm outline-none appearance-none`}
+                    className={`w-full bg-gray-50 dark:bg-gray-800 border ${error ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} rounded-xl px-3 h-11 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-primary/20 focus:border-ios-primary transition-all shadow-sm outline-none appearance-none`}
                   >
                     <option value="" disabled>{t('select_room_placeholder')}</option>
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16].map(num => (
@@ -244,51 +244,53 @@ export const CartDrawer: React.FC = () => {
                     ))}
                     <option value="ห้องล่างสุด">ห้องล่างสุด</option>
                   </select>
-                  {error && <span className="text-xs font-bold text-red-500">{error}</span>}
                 </div>
-                <Input 
-                  label={t('order_note')}
-                  placeholder="Optional..."
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  className="w-full"
-                />
+                <div className="w-[65%] flex flex-col gap-1">
+                  <label className="text-[13px] font-semibold text-gray-700 dark:text-gray-300 truncate">หมายเหตุ (เช่น เคาะประตู)</label>
+                  <input 
+                    placeholder="Optional..."
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 h-11 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-primary/20 focus:border-ios-primary transition-all shadow-sm outline-none"
+                  />
+                </div>
               </div>
+              {error && <span className="text-xs font-bold text-red-500 -mt-2">{error}</span>}
 
               {/* Payment Method Selector */}
-              <div className="flex flex-col gap-1.5 mt-2">
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('payment_method_title')}</label>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1 mt-1">
+                <label className="text-[13px] font-semibold text-gray-700 dark:text-gray-300">{t('payment_method_title')}</label>
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setPaymentMethod('promptpay')}
-                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all ${
+                    className={`flex items-center justify-center gap-1.5 h-11 rounded-xl border-2 transition-all ${
                       paymentMethod === 'promptpay' 
                         ? 'border-ios-primary bg-orange-50 dark:bg-ios-primary/10 text-ios-primary font-bold' 
-                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 font-semibold'
+                        : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 font-semibold'
                     }`}
                   >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                     </svg>
-                    {t('scan_to_pay')}
+                    <span className="text-[13px]">{t('scan_to_pay')}</span>
                   </button>
                   <button
                     onClick={() => setPaymentMethod('cod')}
-                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all ${
+                    className={`flex items-center justify-center gap-1.5 h-11 rounded-xl border-2 transition-all ${
                       paymentMethod === 'cod' 
                         ? 'border-green-500 bg-green-50 dark:bg-green-500/10 text-green-600 font-bold' 
-                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 font-semibold'
+                        : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 font-semibold'
                     }`}
                   >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    {t('cash_on_delivery')}
+                    <span className="text-[13px]">{t('cash_on_delivery')}</span>
                   </button>
                 </div>
               </div>
               
-              <div className="flex justify-between items-center text-xl font-extrabold mt-2 border-t border-gray-100 dark:border-gray-800 pt-4">
+              <div className="flex justify-between items-center text-xl font-extrabold mt-1 border-t border-gray-100 dark:border-gray-800 pt-3">
                 <span>{t('total')}</span>
                 <div className="flex items-center gap-3">
                   {hasDiscount && (
@@ -298,7 +300,7 @@ export const CartDrawer: React.FC = () => {
                 </div>
               </div>
               
-              <Button fullWidth size="lg" onClick={handleCheckout} className="shadow-lg shadow-ios-primary/30 mt-2 font-bold text-lg">
+              <Button fullWidth size="lg" onClick={handleCheckout} className="shadow-lg shadow-ios-primary/30 mt-1 font-bold text-lg">
                 {t('checkout')}
               </Button>
             </div>

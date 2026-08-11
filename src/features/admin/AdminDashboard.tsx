@@ -6,6 +6,7 @@ import { Home, Package, ShoppingCart, Clock } from 'lucide-react';
 import { OrdersManager } from './OrdersManager';
 import { ProductsManager } from './ProductsManager';
 import { SettingsManager } from './SettingsManager';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const AdminDashboard: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -105,7 +106,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
                 <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
               </div>
-              <span className="font-semibold text-gray-600 dark:text-gray-300 text-sm">Pending</span>
+              <span className="font-semibold text-gray-600 dark:text-gray-300 text-sm">{t('status_pending')}</span>
             </div>
             <div className="text-3xl font-extrabold text-gray-900 dark:text-white">{pendingOrders}</div>
           </div>
@@ -115,7 +116,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                 <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
-              <span className="font-semibold text-gray-600 dark:text-gray-300 text-sm">Products</span>
+              <span className="font-semibold text-gray-600 dark:text-gray-300 text-sm">{t('products')}</span>
             </div>
             <div className="text-3xl font-extrabold text-gray-900 dark:text-white">{totalProducts}</div>
           </div>
@@ -163,9 +164,19 @@ export const AdminDashboard: React.FC = () => {
       {/* Content */}
       {/* Content */}
       <main className="p-4 md:px-8 max-w-7xl mx-auto">
-        {activeTab === 'orders' && <OrdersManager />}
-        {activeTab === 'products' && <ProductsManager />}
-        {activeTab === 'settings' && <SettingsManager />}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            {activeTab === 'orders' && <OrdersManager />}
+            {activeTab === 'products' && <ProductsManager />}
+            {activeTab === 'settings' && <SettingsManager />}
+          </motion.div>
+        </AnimatePresence>
       </main>
     </div>
   );

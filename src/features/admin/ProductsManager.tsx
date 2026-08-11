@@ -6,6 +6,7 @@ import type { ProductFormData } from './ProductFormModal';
 import { Edit2, ArrowUp, ArrowDown, Save, Plus, ArrowUpDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getOptimizedImageUrl } from '../../utils/imageUtils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const ProductsManager: React.FC = () => {
   const { i18n } = useTranslation();
@@ -167,68 +168,89 @@ export const ProductsManager: React.FC = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 px-2">
+      <motion.div 
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+        }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 px-2"
+      >
+        <AnimatePresence mode="popLayout">
         {displayProducts.map((product, index) => (
-          <Card key={product.id} className={`flex gap-4 p-4 items-center bg-white dark:bg-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.05)] border ${isSorting ? 'border-dashed border-blue-300 dark:border-blue-800/50 scale-[0.98]' : 'border-gray-100 dark:border-gray-800'} transition-all`}>
-            <div className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-2xl overflow-hidden flex-shrink-0 relative">
-              {product.image_url ? (
-                <img src={getOptimizedImageUrl(product.image_url, 150, 70)} alt="" className="absolute inset-0 w-full h-full object-contain p-1" loading="lazy" decoding="async" />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">No Img</div>
-              )}
-            </div>
-            <div className="flex-grow flex flex-col justify-center min-w-0">
-              <h3 className="font-bold text-base line-clamp-1 text-gray-900 dark:text-white">{isEn && product.name_en ? product.name_en : product.name_th}</h3>
-              <div className="flex items-center gap-2 mt-0.5">
-                {product.sale_price ? (
-                  <>
-                    <p className="text-ios-primary font-bold text-sm">฿{product.sale_price}</p>
-                    <p className="text-gray-400 font-medium text-xs line-through">฿{product.price}</p>
-                  </>
+          <motion.div
+            layout={isSorting}
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              show: { opacity: 1, y: 0 }
+            }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            key={product.id}
+          >
+            <Card className={`flex gap-4 p-4 items-center bg-white dark:bg-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.05)] border ${isSorting ? 'border-dashed border-blue-300 dark:border-blue-800/50 scale-[0.98]' : 'border-gray-100 dark:border-gray-800'} transition-all h-full`}>
+              <div className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-2xl overflow-hidden flex-shrink-0 relative">
+                {product.image_url ? (
+                  <img src={getOptimizedImageUrl(product.image_url, 150, 70)} alt="" className="absolute inset-0 w-full h-full object-contain p-1" loading="lazy" decoding="async" />
                 ) : (
-                  <p className="text-ios-primary font-bold text-sm">฿{product.price}</p>
+                  <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">No Img</div>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-1 font-medium bg-gray-100 dark:bg-gray-700 w-fit px-2 py-0.5 rounded-full">
-                Stock: {product.stock || 0}
-              </p>
-            </div>
-            {isSorting ? (
-              <div className="flex flex-col gap-2 items-end flex-shrink-0">
-                <button 
-                  onClick={() => moveProduct(index, 'up')}
-                  disabled={index === 0}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors shadow-sm border ${index === 0 ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-700' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200'}`}
-                >
-                  <ArrowUp className="w-5 h-5" />
-                </button>
-                <button 
-                  onClick={() => moveProduct(index, 'down')}
-                  disabled={index === displayProducts.length - 1}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors shadow-sm border ${index === displayProducts.length - 1 ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-700' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200'}`}
-                >
-                  <ArrowDown className="w-5 h-5" />
-                </button>
+              <div className="flex-grow flex flex-col justify-center min-w-0">
+                <h3 className="font-bold text-base line-clamp-1 text-gray-900 dark:text-white">{isEn && product.name_en ? product.name_en : product.name_th}</h3>
+                <div className="flex items-center gap-2 mt-0.5">
+                  {product.sale_price ? (
+                    <>
+                      <p className="text-ios-primary font-bold text-sm">฿{product.sale_price}</p>
+                      <p className="text-gray-400 font-medium text-xs line-through">฿{product.price}</p>
+                    </>
+                  ) : (
+                    <p className="text-ios-primary font-bold text-sm">฿{product.price}</p>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1 font-medium bg-gray-100 dark:bg-gray-700 w-fit px-2 py-0.5 rounded-full">
+                  Stock: {product.stock || 0}
+                </p>
               </div>
-            ) : (
-              <div className="flex flex-col gap-2 items-end flex-shrink-0">
-                <button 
-                  onClick={() => openEditModal(product)}
-                  className="w-full px-4 py-1.5 rounded-full text-xs font-bold transition-all transform active:scale-95 shadow-sm bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center"
-                >
-                  <Edit2 className="w-3 h-3 mr-1" /> {isEn ? 'Edit' : 'แก้ไข'}
-                </button>
-                <button 
-                  onClick={() => toggleStatus(product.id, product.is_active)}
-                  className={`w-full px-4 py-1.5 rounded-full text-[10px] font-bold transition-all transform active:scale-95 shadow-sm ${product.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700'}`}
-                >
-                  {product.is_active ? 'ACTIVE' : 'HIDDEN'}
-                </button>
-              </div>
-            )}
-          </Card>
+              {isSorting ? (
+                <div className="flex flex-col gap-2 items-end flex-shrink-0">
+                  <button 
+                    onClick={() => moveProduct(index, 'up')}
+                    disabled={index === 0}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors shadow-sm border ${index === 0 ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-700' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200'}`}
+                  >
+                    <ArrowUp className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => moveProduct(index, 'down')}
+                    disabled={index === displayProducts.length - 1}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors shadow-sm border ${index === displayProducts.length - 1 ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-700' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200'}`}
+                  >
+                    <ArrowDown className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 items-end flex-shrink-0">
+                  <button 
+                    onClick={() => openEditModal(product)}
+                    className="w-full px-4 py-1.5 rounded-full text-xs font-bold transition-all transform active:scale-95 shadow-sm bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center"
+                  >
+                    <Edit2 className="w-3 h-3 mr-1" /> {isEn ? 'Edit' : 'แก้ไข'}
+                  </button>
+                  <button 
+                    onClick={() => toggleStatus(product.id, product.is_active)}
+                    className={`w-full px-4 py-1.5 rounded-full text-[10px] font-bold transition-all transform active:scale-95 shadow-sm ${product.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700'}`}
+                  >
+                    {product.is_active ? 'ACTIVE' : 'HIDDEN'}
+                  </button>
+                </div>
+              )}
+            </Card>
+          </motion.div>
         ))}
-      </div>
+        </AnimatePresence>
+      </motion.div>
 
       <ProductFormModal 
         isOpen={isFormModalOpen} 

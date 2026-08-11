@@ -5,10 +5,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabaseClient';
 import { useCartStore } from '../../store/useCartStore';
 import type { Product } from '../../store/useCartStore';
-import { Plus, Minus, ShoppingBag, PackageOpen } from 'lucide-react';
+import { Plus, Minus, ShoppingBag, PackageOpen, Headphones } from 'lucide-react';
 import { CartDrawer } from '../cart/CartDrawer';
 import { AdminAuthModal } from '../admin/AdminAuthModal';
 import { ProductDetailsModal } from './ProductDetailsModal';
+import { FeedbackModal } from './FeedbackModal';
 import { getOptimizedImageUrl } from '../../utils/imageUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Variants } from 'framer-motion';
@@ -34,6 +35,29 @@ export const HomePage: React.FC = () => {
   const [isAdminModalOpen, setAdminModalOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('ทั้งหมด');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isFeedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  useEffect(() => {
+    // Initial delay before showing
+    const initialTimeout = setTimeout(() => {
+      setShowTooltip(true);
+    }, 1000);
+    
+    return () => clearTimeout(initialTimeout);
+  }, []);
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    if (showTooltip) {
+      // Hide after 10 seconds
+      timeout = setTimeout(() => setShowTooltip(false), 10000);
+    } else {
+      // Show again after 5 seconds
+      timeout = setTimeout(() => setShowTooltip(true), 5000);
+    }
+    return () => clearTimeout(timeout);
+  }, [showTooltip]);
 
   useEffect(() => {
     const hasVisited = sessionStorage.getItem('has_visited');
@@ -153,20 +177,30 @@ export const HomePage: React.FC = () => {
           <div className="flex items-center gap-3">
             <button 
               onClick={() => i18n.changeLanguage(i18n.language === 'th' ? 'en' : 'th')}
-              className="text-[10px] md:text-xs font-bold bg-gray-100 dark:bg-gray-800 px-3 py-1.5 md:py-2 rounded-full hover:bg-gray-200 transition-colors shadow-sm text-gray-700 dark:text-gray-200"
+              className="text-[10px] md:text-xs font-bold bg-gray-100 dark:bg-gray-800 px-3 py-1.5 md:py-2 rounded-full hover:bg-gray-200 transition-colors shadow-sm text-gray-700 dark:text-gray-200 shrink-0"
             >
               {i18n.language.toUpperCase()}
+            </button>
+            
+            {/* Desktop Feedback Button */}
+            <button 
+              onClick={() => setFeedbackModalOpen(true)}
+              className="hidden md:flex items-center gap-2 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-4 py-1.5 rounded-full hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors shadow-sm shrink-0"
+              title={i18n.language === 'en' ? 'Contact Admin' : 'ติดต่อแอดมิน'}
+            >
+              <Headphones className="w-4 h-4" />
+              <span className="text-sm font-bold">{i18n.language === 'en' ? 'Contact' : 'ติดต่อแอดมิน'}</span>
             </button>
             
             {/* Desktop Cart Button */}
             <button 
               onClick={() => setCartOpen(true)}
-              className="hidden md:flex items-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-1.5 rounded-full hover:bg-gray-800 transition-colors shadow-sm relative"
+              className="hidden md:flex items-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-1.5 rounded-full hover:bg-gray-800 transition-colors shadow-sm relative shrink-0"
             >
               <ShoppingBag className="w-4 h-4" />
               <span className="text-sm font-bold">{t('cart')}</span>
               {cartItemCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-gray-900">
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-gray-900 shadow-sm">
                   {cartItemCount}
                 </span>
               )}
@@ -179,7 +213,12 @@ export const HomePage: React.FC = () => {
       <main className="pt-14 md:pt-[calc(env(safe-area-inset-top)+3.5rem)]">
         
         {/* 3. Hero / Welcome Banner */}
-        <div className="px-4 pt-4 mb-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="px-4 pt-4 mb-6"
+        >
           <div className="relative w-full overflow-hidden rounded-3xl border border-[#FDE1C8] p-5 md:p-6 shadow-sm flex items-center justify-between bg-white">
             
             {/* Dynamic Animated Gradient Background */}
@@ -267,15 +306,28 @@ export const HomePage: React.FC = () => {
             </div>
 
           </div>
-        </div>
+        </motion.div>
 
         {/* 4. Horizontal Scroll Categories */}
-        <div className="flex overflow-x-auto gap-2 px-4 mb-6 hide-scrollbar pb-1 sticky top-14 md:top-[calc(env(safe-area-inset-top)+3.5rem)] z-30 bg-gray-50/90 dark:bg-black/90 backdrop-blur-sm pt-2">
+        <motion.div 
+          initial="hidden"
+          animate="show"
+          variants={{
+            hidden: { opacity: 0 },
+            show: { opacity: 1, transition: { staggerChildren: 0.06 } }
+          }}
+          className="flex overflow-x-auto gap-2 px-4 mb-6 hide-scrollbar pb-1 sticky top-14 md:top-[calc(env(safe-area-inset-top)+3.5rem)] z-30 bg-gray-50/90 dark:bg-black/90 backdrop-blur-sm pt-2"
+        >
           {CATEGORIES.map(category => (
-            <button
+            <motion.button
               key={category.id}
+              variants={{
+                hidden: { opacity: 0, scale: 0.8 },
+                show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 400, damping: 25 } }
+              }}
+              whileTap={{ scale: 0.92 }}
               onClick={() => setActiveCategory(category.id)}
-              className={`whitespace-nowrap px-5 py-2 text-sm font-medium transition-all transform active:scale-95 ${
+              className={`whitespace-nowrap px-5 py-2 text-sm font-medium transition-colors ${
                 activeCategory === category.id 
                   ? 'bg-orange-500 text-white rounded-full shadow-md' 
                   : 'bg-white text-gray-600 hover:bg-orange-50 hover:text-orange-600 rounded-full border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
@@ -287,9 +339,9 @@ export const HomePage: React.FC = () => {
                 category.id === 'ของกินเล่น' ? 'Snacks' :
                 category.id === 'ของใช้' ? 'Utilities' : category.id
               ) : category.id}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
 
         {/* 5. Product Grid */}
         <div className="mt-2">
@@ -371,7 +423,7 @@ export const HomePage: React.FC = () => {
                               <span className="font-medium text-gray-400 text-sm line-through">฿{product.price.toLocaleString()}</span>
                             </div>
                           ) : (
-                            <span className="text-orange-600 font-bold text-lg md:text-xl leading-none">฿{product.price.toLocaleString()}</span>
+                            <span className="text-gray-600 dark:text-gray-300 font-bold text-lg md:text-xl leading-none">฿{product.price.toLocaleString()}</span>
                           )}
                         </div>
 
@@ -425,48 +477,84 @@ export const HomePage: React.FC = () => {
         </div>
       </main>
 
-      {/* 6. Floating Action Cart (Mobile Only) */}
-      <AnimatePresence>
-        {cartItemCount > 0 && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-50 mb-[env(safe-area-inset-bottom)]"
+      {/* 6. Floating Action Buttons (Mobile Only) */}
+      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-50 mb-[env(safe-area-inset-bottom)] pointer-events-none flex items-end justify-between">
+        
+        {/* Left: Feedback Button */}
+        <div className="relative pointer-events-auto flex flex-col items-center">
+          {/* Tooltip bubble */}
+          <motion.div 
+            initial={{ opacity: 0, y: 15, scale: 0.9 }}
+            animate={showTooltip ? { opacity: 1, y: [0, -5, 0], scale: 1 } : { opacity: 0, y: 15, scale: 0.9 }}
+            transition={showTooltip ? { 
+              opacity: { duration: 0.4 },
+              scale: { duration: 0.4, type: "spring", stiffness: 300 },
+              y: { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
+            } : {
+              duration: 0.4, ease: "easeOut"
+            }}
+            className="absolute -top-12 left-0 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-200 text-xs font-bold px-3 py-2 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 whitespace-nowrap origin-bottom-left"
           >
-            <div 
-              className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/50 dark:border-gray-800/50 text-gray-900 dark:text-white rounded-[2rem] p-2 shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform"
-              onClick={() => setCartOpen(true)}
-            >
-              <div className="flex items-center">
-                <div className="bg-orange-50 dark:bg-orange-900/30 w-12 h-12 rounded-full flex items-center justify-center relative ml-1">
-                  <ShoppingBag className="w-5 h-5 text-orange-500" />
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[11px] font-bold min-w-[20px] h-5 px-1 flex items-center justify-center rounded-full border-2 border-white dark:border-gray-900 shadow-sm">
-                    {cartItemCount}
-                  </span>
-                </div>
-                <div className="ml-3 flex flex-col justify-center">
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-none mb-1.5">{i18n.language === 'en' ? 'Total Price' : 'ราคารวม'}</span>
-                  <span className="text-base font-bold text-orange-500 leading-none">฿{cartTotal.toLocaleString()}</span>
-                </div>
-              </div>
-              <div className="bg-gradient-to-r from-orange-500 to-orange-400 text-white h-11 px-5 rounded-full font-bold text-sm flex items-center gap-1.5 shadow-lg shadow-orange-500/25 mr-1">
-                {i18n.language === 'en' ? 'View Cart' : 'ดูตะกร้า'}
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
+            {i18n.language === 'en' ? 'Looking for something?' : 'หาสินค้าไม่เจอใช่ไหม?'}
+            {/* Tooltip triangle */}
+            <div className="absolute -bottom-1.5 left-5 w-3 h-3 bg-gray-100 dark:bg-gray-800 border-b border-r border-gray-200 dark:border-gray-700 rotate-45" />
           </motion.div>
-        )}
-      </AnimatePresence>
+
+          <button 
+            onClick={() => setFeedbackModalOpen(true)}
+            className="w-[52px] h-[52px] bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center shadow-lg border border-gray-200 dark:border-gray-700 active:scale-95 transition-transform"
+          >
+            <Headphones className="w-6 h-6 text-orange-500" />
+          </button>
+        </div>
+
+        {/* Right: Cart Button */}
+        <AnimatePresence>
+          {cartItemCount > 0 && (
+            <motion.div
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 50, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              className="pointer-events-auto"
+            >
+              <div 
+                className="bg-white dark:bg-gray-900 border-2 border-[#FFF4EB] dark:border-gray-800 rounded-[2rem] p-1.5 shadow-[0_8px_30px_rgb(255,100,0,0.12)] flex items-center gap-3 cursor-pointer active:scale-95 transition-transform h-[58px]"
+                onClick={() => setCartOpen(true)}
+              >
+                <div className="flex items-center ml-1">
+                  <div className="bg-[#FFF4EB] dark:bg-orange-900/30 w-11 h-11 rounded-full flex items-center justify-center relative">
+                    <ShoppingBag className="w-5 h-5 text-orange-500" />
+                    <span className="absolute -top-1 -right-1 bg-[#FF4D4D] text-white text-[11px] font-bold min-w-[20px] h-5 px-1 flex items-center justify-center rounded-full border-[1.5px] border-white dark:border-gray-900 shadow-sm">
+                      {cartItemCount}
+                    </span>
+                  </div>
+                  <div className="ml-2.5 flex flex-col justify-center min-w-[2.5rem]">
+                    <span className="text-[10px] text-gray-400 dark:text-gray-400 font-medium leading-none mb-1 text-center">{i18n.language === 'en' ? 'Total' : 'ราคารวม'}</span>
+                    <span className="text-[15px] font-bold text-[#0B1C33] dark:text-white leading-none tracking-tight">฿{cartTotal.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="bg-[#FF7A00] text-white h-full px-5 rounded-[2rem] font-bold text-[13px] flex items-center gap-1.5">
+                  {i18n.language === 'en' ? 'Cart' : 'ดูตะกร้า'}
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <CartDrawer />
       <ProductDetailsModal 
         isOpen={!!selectedProduct} 
         onClose={() => setSelectedProduct(null)} 
         product={selectedProduct} 
+      />
+      <FeedbackModal 
+        isOpen={isFeedbackModalOpen} 
+        onClose={() => setFeedbackModalOpen(false)} 
       />
       <AdminAuthModal isOpen={isAdminModalOpen} onClose={() => setAdminModalOpen(false)} />
     </div>

@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { supabase } from '../../services/supabaseClient';
-import { Bell, Activity, LogOut, Trash2, KeyRound, Clock } from 'lucide-react';
+import { Bell, Activity, LogOut, Trash2, KeyRound, Clock, MessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { subscribeToPushNotifications } from '../../utils/pushUtils';
+import { FeedbackListModal } from './FeedbackListModal';
 
 export const SettingsManager: React.FC = () => {
   const { i18n } = useTranslation();
@@ -35,6 +36,29 @@ export const SettingsManager: React.FC = () => {
     title: '',
     message: ''
   });
+
+  const [unreadFeedbackCount, setUnreadFeedbackCount] = useState(0);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+
+  useEffect(() => {
+    fetchUnreadFeedbackCount();
+    
+    const channel = supabase
+      .channel('public:customer_feedbacks')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customer_feedbacks' }, fetchUnreadFeedbackCount)
+      .subscribe();
+      
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const fetchUnreadFeedbackCount = async () => {
+    const { count } = await supabase
+      .from('customer_feedbacks')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_read', false);
+      
+    setUnreadFeedbackCount(count || 0);
+  };
 
   // Toggle push notifications
   const handleTogglePush = async () => {
@@ -179,6 +203,32 @@ export const SettingsManager: React.FC = () => {
       
       <Card className="p-4 flex flex-col gap-4">
         
+        {/* Customer Feedback */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-green-50 dark:bg-green-900/30 flex items-center justify-center relative">
+              <MessageSquare className="w-5 h-5 text-green-600 dark:text-green-400" />
+              {unreadFeedbackCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full shadow-sm">
+                  {unreadFeedbackCount}
+                </span>
+              )}
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-gray-900 dark:text-white">{isEn ? 'Customer Feedback' : 'ข้อเสนอแนะจากลูกค้า'}</h3>
+              <p className="text-xs text-gray-500">{isEn ? 'Product requests and suggestions' : 'คำขอเพิ่มสินค้าและคำแนะนำต่างๆ'}</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setIsFeedbackModalOpen(true)}
+            className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-semibold rounded-xl transition-colors"
+          >
+            {isEn ? 'View' : 'เปิดดู'}
+          </button>
+        </div>
+        
+        <div className="h-px bg-gray-100 dark:bg-gray-800 w-full" />
+
         {/* Notification Settings */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -241,6 +291,7 @@ export const SettingsManager: React.FC = () => {
         </div>
         
         <div className="h-px bg-gray-100 dark:bg-gray-800 w-full" />
+
 
         {/* Change Password */}
         <div className="flex items-center justify-between">
@@ -402,6 +453,15 @@ export const SettingsManager: React.FC = () => {
           </Button>
         </div>
       </Modal>
+
+      {/* Feedback Modal */}
+      <FeedbackListModal 
+        isOpen={isFeedbackModalOpen} 
+        onClose={() => {
+          setIsFeedbackModalOpen(false);
+          fetchUnreadFeedbackCount(); // Refresh count on close in case they were marked read
+        }} 
+      />
     </div>
   );
 };

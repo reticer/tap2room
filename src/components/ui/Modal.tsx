@@ -8,9 +8,10 @@ interface ModalProps {
   onClose: () => void;
   title?: React.ReactNode;
   children: React.ReactNode;
+  bgClass?: string;
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, bgClass = 'bg-ios-card dark:bg-ios-darkCard' }) => {
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -44,7 +45,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
-            className="relative w-full max-w-md bg-ios-card dark:bg-ios-darkCard rounded-3xl shadow-ios-dark overflow-hidden flex flex-col max-h-[90vh]"
+            className={`relative w-full max-w-md ${bgClass} rounded-3xl shadow-ios-dark overflow-hidden flex flex-col max-h-[90vh]`}
           >
             <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
               <h2 className="text-lg font-semibold flex-1">{title}</h2>

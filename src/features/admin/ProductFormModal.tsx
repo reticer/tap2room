@@ -50,6 +50,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
   const [isCropping, setIsCropping] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
 
   // Populate data if editing
@@ -195,6 +196,30 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
     }
   };
 
+  const handleDelete = async () => {
+    if (!product?.id) return;
+    const confirmMsg = isEn ? "Are you sure you want to delete this product?" : "คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?";
+    if (!window.confirm(confirmMsg)) return;
+    
+    setIsDeleting(true);
+    try {
+      const { error: deleteError } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', product.id);
+        
+      if (deleteError) throw deleteError;
+      
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Error deleting product');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (isCropping && imageSrc) {
     return (
       <Modal isOpen={isOpen} onClose={cancelCrop} title="Crop Image (Square)">
@@ -280,11 +305,26 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
           </div>
         </div>
 
-        <Button type="submit" fullWidth isLoading={isSubmitting} className="mt-2 text-lg font-bold">
-          {product 
-            ? (isEn ? "Save Changes" : "บันทึกการเปลี่ยนแปลง") 
-            : (isEn ? "Save Product" : "เพิ่มสินค้าใหม่")}
-        </Button>
+        <div className="flex flex-col gap-2 mt-2">
+          <Button type="submit" fullWidth isLoading={isSubmitting} className="text-lg font-bold">
+            {product 
+              ? (isEn ? "Save Changes" : "บันทึกการเปลี่ยนแปลง") 
+              : (isEn ? "Save Product" : "เพิ่มสินค้าใหม่")}
+          </Button>
+
+          {product && (
+            <Button 
+              type="button" 
+              variant="danger" 
+              fullWidth 
+              onClick={handleDelete}
+              isLoading={isDeleting}
+              disabled={isSubmitting}
+            >
+              {isEn ? "Delete Product" : "ลบสินค้า"}
+            </Button>
+          )}
+        </div>
       </form>
     </Modal>
   );

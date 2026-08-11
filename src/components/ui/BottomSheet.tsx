@@ -8,9 +8,10 @@ interface BottomSheetProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
+  bgClass?: string;
 }
 
-export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title, children }) => {
+export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title, children, bgClass = 'bg-ios-card dark:bg-ios-darkCard' }) => {
   // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) {
@@ -44,7 +45,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-            className="relative w-full max-w-md mx-auto bg-ios-card dark:bg-ios-darkCard rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col max-h-[85vh]"
+            className={`relative w-full max-w-md mx-auto ${bgClass} rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col max-h-[85vh]`}
             style={{ paddingBottom: 'var(--safe-area-bottom)' }}
           >
             {/* Drag Handle Indicator */}
