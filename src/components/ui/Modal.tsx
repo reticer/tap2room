@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -47,7 +47,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
             className="relative w-full max-w-md bg-ios-card dark:bg-ios-darkCard rounded-3xl shadow-ios-dark overflow-hidden flex flex-col max-h-[90vh]"
           >
             <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
-              <h2 className="text-lg font-semibold">{title}</h2>
+              <h2 className="text-lg font-semibold flex-1">{title}</h2>
               <button
                 onClick={onClose}
                 className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"

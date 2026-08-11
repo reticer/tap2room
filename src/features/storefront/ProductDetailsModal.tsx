@@ -5,6 +5,7 @@ import type { Product } from '../../store/useCartStore';
 import { useCartStore } from '../../store/useCartStore';
 import { Plus, Minus, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getOptimizedImageUrl } from '../../utils/imageUtils';
 
 interface ProductDetailsModalProps {
   product: Product | null;
@@ -48,18 +49,25 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('product_details')}>
       <div className="flex flex-col gap-4">
-        {/* Image */}
-        <div className="w-full aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden relative">
-          {product.image_url ? (
-            <img src={product.image_url} alt={product.name_th} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">{t('no_image')}</div>
-          )}
-          {product.stock === 0 && (
-            <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-10">
-              <span className="bg-gray-900 text-white px-4 py-2 rounded-full font-bold">{t('sold_out')}</span>
-            </div>
-          )}
+        <div className="relative">
+          <div className="w-full aspect-square bg-orange-50/50 dark:bg-gray-900 relative overflow-hidden rounded-2xl">
+            {product.image_url ? (
+              <img src={getOptimizedImageUrl(product.image_url, 600, 85)} alt={product.name_th} className={`absolute inset-0 w-full h-full object-contain ${product.stock === 0 ? 'grayscale opacity-60' : ''}`} />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                {t('no_image')}
+              </div>
+            )}
+            
+            {/* Out of stock badge */}
+            {product.stock === 0 && (
+              <div className="absolute inset-0 bg-white/40 dark:bg-black/60 flex items-center justify-center z-10">
+                <span className="bg-gray-900/90 text-white px-5 py-2 rounded-full text-[13px] font-bold tracking-wider backdrop-blur-sm">
+                  {i18n.language === 'en' ? 'OUT OF STOCK' : 'สินค้าหมด'}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Details */}

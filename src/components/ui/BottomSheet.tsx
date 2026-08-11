@@ -62,7 +62,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
               {children}
             </div>
           </motion.div>

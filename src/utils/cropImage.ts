@@ -20,11 +20,16 @@ export async function getCroppedImg(
     return null;
   }
 
-  // Set width & height of canvas to match the cropped area
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+  // Limit output size to max 800px on longest side for web performance
+  const MAX_SIZE = 800;
+  const scale = Math.min(1, MAX_SIZE / Math.max(pixelCrop.width, pixelCrop.height));
+  const outputWidth = Math.round(pixelCrop.width * scale);
+  const outputHeight = Math.round(pixelCrop.height * scale);
 
-  // Draw the cropped image onto the canvas
+  canvas.width = outputWidth;
+  canvas.height = outputHeight;
+
+  // Draw the cropped image onto the canvas (scaled down if needed)
   ctx.drawImage(
     image,
     pixelCrop.x,
@@ -33,11 +38,11 @@ export async function getCroppedImg(
     pixelCrop.height,
     0,
     0,
-    pixelCrop.width,
-    pixelCrop.height
+    outputWidth,
+    outputHeight
   );
 
-  // Return as a Promise resolving to a File object
+  // Return as a Promise resolving to a compressed JPEG File
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (!blob) {
@@ -46,6 +51,7 @@ export async function getCroppedImg(
       }
       const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
       resolve(file);
-    }, 'image/jpeg');
+    }, 'image/jpeg', 0.85);
   });
 }
+

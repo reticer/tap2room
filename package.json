@@ -12,6 +12,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.112.2",
     "@tanstack/react-query": "^5.101.4",
+    "dotenv": "^17.4.2",
     "framer-motion": "^13.0.0",
     "i18next": "^26.3.6",
     "lucide-react": "^1.31.0",
@@ -22,6 +23,9 @@
     "react-easy-crop": "^6.2.3",
     "react-i18next": "^17.0.11",
     "react-router-dom": "^7.18.2",
+    "sharp": "^0.35.3",
+    "workbox-core": "^7.4.1",
+    "workbox-precaching": "^7.4.1",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

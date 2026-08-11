@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabaseClient';
 import { useCartStore } from '../../store/useCartStore';
 import type { Product } from '../../store/useCartStore';
@@ -9,6 +9,7 @@ import { Plus, Minus, ShoppingBag, PackageOpen } from 'lucide-react';
 import { CartDrawer } from '../cart/CartDrawer';
 import { AdminAuthModal } from '../admin/AdminAuthModal';
 import { ProductDetailsModal } from './ProductDetailsModal';
+import { getOptimizedImageUrl } from '../../utils/imageUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 
@@ -22,6 +23,7 @@ const CATEGORIES = [
 export const HomePage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const addItem = useCartStore(state => state.addItem);
   const removeItem = useCartStore(state => state.removeItem);
   const updateQuantity = useCartStore(state => state.updateQuantity);
@@ -45,7 +47,20 @@ export const HomePage: React.FC = () => {
         details: { url: window.location.pathname }
       }).then();
     }
-  }, []);
+    
+    // Subscribe to real-time changes on products table
+    const channel = supabase
+      .channel('public:products:changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+        // Invalidate and refetch whenever products table changes
+        queryClient.invalidateQueries({ queryKey: ['products'] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['products'],
@@ -54,10 +69,20 @@ export const HomePage: React.FC = () => {
         .from('products')
         .select('*')
         .eq('is_active', true)
+        .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Product[];
+      
+      const productList = data as Product[];
+      
+      // Sort to push out-of-stock items to the bottom, while maintaining sort_order
+      return productList.sort((a, b) => {
+        const aOut = a.stock === 0 ? 1 : 0;
+        const bOut = b.stock === 0 ? 1 : 0;
+        if (aOut !== bOut) return aOut - bOut;
+        return 0; // maintain original order from Supabase
+      });
     }
   });
 
@@ -155,16 +180,92 @@ export const HomePage: React.FC = () => {
         
         {/* 3. Hero / Welcome Banner */}
         <div className="px-4 pt-4 mb-6">
-          <div className="bg-gradient-to-br from-orange-50 to-amber-100 rounded-[1.5rem] p-6 shadow-sm border border-orange-100 relative overflow-hidden">
-            <div className="relative z-10">
-              <h2 className="text-xl md:text-2xl font-bold text-orange-900 leading-tight mb-2">
-                หิวไหม?<br/>สั่งเลยเดี๋ยวไปส่ง 🛵
+          <div className="relative w-full overflow-hidden rounded-3xl border border-[#FDE1C8] p-5 md:p-6 shadow-sm flex items-center justify-between bg-white">
+            
+            {/* Dynamic Animated Gradient Background */}
+            <motion.div 
+              animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+              transition={{ repeat: Infinity, duration: 15, ease: "easeInOut" }}
+              className="absolute inset-0 z-0"
+              style={{
+                backgroundImage: 'linear-gradient(270deg, #FAE8D4, #FFFFFF, #FFEDD5, #FFF9F0, #FCE6D2)',
+                backgroundSize: '400% 400%'
+              }}
+            />
+            
+            {/* Left Column Content */}
+            <div className="relative z-10 flex flex-col items-start max-w-[65%] space-y-2.5">
+              <span className="relative overflow-hidden inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#FF7A00] to-[#FF4D4D] text-white text-[11px] md:text-xs font-semibold shadow-sm">
+                <motion.span 
+                  animate={{ x: ['-150%', '250%'] }} 
+                  transition={{ repeat: Infinity, duration: 2.5, ease: "linear", repeatDelay: 1 }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-[50%] h-full -skew-x-12"
+                />
+                🔥 {i18n.language === 'en' ? 'August Special' : 'โปรเด็ดเดือนสิงหาคม'}
+              </span>
+              <h2 className="text-xl md:text-3xl font-black text-[#5C3D2E] leading-[1.15] tracking-tight">
+                {i18n.language === 'en' ? <>Hungry?<br/>Order now! 🛵</> : <>หิวไหม?<br/>สั่งเลยเดี๋ยวไปส่ง 🛵</>}
               </h2>
-              <p className="text-sm md:text-base text-orange-700/80 font-medium">
-                ส่งไว ส่งตรงถึงหน้าห้องคุณ
-              </p>
+              <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-[#8A5A44]">
+                <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
+                {i18n.language === 'en' ? 'Free delivery to your door!' : 'ส่งฟรีถึงหน้าห้อง!'}
+              </div>
             </div>
-            <div className="absolute -right-4 -bottom-4 text-7xl md:text-8xl opacity-20 transform rotate-12">🛍️</div>
+
+            {/* Right Column Graphics */}
+            <div className="absolute right-0 md:right-6 bottom-0 h-full flex items-end justify-end pointer-events-none pr-2 pb-2 scale-100 md:scale-[1.35] md:origin-bottom-right">
+              
+              {/* Shopping Bag SVG (Peach) */}
+              <motion.div
+                animate={{ rotate: [-2, 2, -2], y: [0, -2, 0] }}
+                transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
+                className="z-10 absolute right-10 bottom-0 md:-bottom-2 drop-shadow-md"
+              >
+                <svg width="80" height="90" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M25 30 C25 5 55 5 55 30" stroke="#F5A97F" strokeWidth="6" strokeLinecap="round"/>
+                  <rect x="10" y="30" width="60" height="55" rx="8" fill="#FDBA74"/>
+                  <rect x="25" y="55" width="30" height="12" rx="6" fill="#F5A97F"/>
+                </svg>
+              </motion.div>
+
+              {/* Cup SVG (Yellow/Peach) */}
+              <motion.div
+                animate={{ rotate: [2, -2, 2], y: [0, -3, 0] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", delay: 0.5 }}
+                className="z-20 origin-bottom right-0 bottom-0 md:-bottom-1 drop-shadow-lg"
+              >
+                <svg width="70" height="90" viewBox="0 0 70 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="33" y="5" width="4" height="25" rx="2" fill="#D97706"/>
+                  <path d="M10 30 L60 30 L50 20 L20 20 Z" fill="#FDE047"/>
+                  <path d="M15 30 L55 30 L45 80 L25 80 Z" fill="#FCD34D"/>
+                  <path d="M18 45 L52 45 L49 60 L21 60 Z" fill="#FBBF24"/>
+                </svg>
+              </motion.div>
+
+              {/* Sparkle 1 */}
+              <motion.div 
+                animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 0.8], rotate: [0, 90, 180] }} 
+                transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }} 
+                className="absolute top-6 right-2 text-[#FBBF24] z-30 drop-shadow-sm"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
+                </svg>
+              </motion.div>
+
+              {/* Sparkle 2 */}
+              <motion.div 
+                animate={{ opacity: [0, 1, 0], scale: [0.6, 1, 0.6], rotate: [180, 90, 0] }} 
+                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut", delay: 1 }} 
+                className="absolute top-2 right-12 text-[#FCD34D] z-30 drop-shadow-sm"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
+                </svg>
+              </motion.div>
+
+            </div>
+
           </div>
         </div>
 
@@ -180,7 +281,12 @@ export const HomePage: React.FC = () => {
                   : 'bg-white text-gray-600 hover:bg-orange-50 hover:text-orange-600 rounded-full border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
               }`}
             >
-              {category.id}
+              {i18n.language === 'en' ? (
+                category.id === 'ทั้งหมด' ? 'All' :
+                category.id === 'เครื่องดื่ม' ? 'Drinks' :
+                category.id === 'ของกินเล่น' ? 'Snacks' :
+                category.id === 'ของใช้' ? 'Utilities' : category.id
+              ) : category.id}
             </button>
           ))}
         </div>
@@ -220,33 +326,39 @@ export const HomePage: React.FC = () => {
                     onClick={() => setSelectedProduct(product)}
                   >
                     
-                    <div className="w-full aspect-square bg-orange-50/50 dark:bg-gray-900 flex items-center justify-center relative">
+                    <div className="w-full aspect-square bg-orange-50/50 dark:bg-gray-900 relative overflow-hidden flex-shrink-0">
                       {product.image_url ? (
                         <img 
-                          src={product.image_url} 
+                          src={getOptimizedImageUrl(product.image_url, 400, 80)} 
                           alt={product.name_th} 
-                          className="w-full h-full object-cover rounded-t-2xl"
+                          className={`absolute inset-0 w-full h-full object-contain ${product.stock === 0 ? 'grayscale opacity-60' : ''}`}
+                          loading="lazy"
+                          decoding="async"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                        <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs">
                           {t('no_image')}
                         </div>
                       )}
                       
-                      {/* Stock Badges */}
-                      {product.stock <= 5 && product.stock > 0 && (
-                        <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
-                          {product.stock} {t('stock_left')}
+                      {/* SALE Badge */}
+                      {product.sale_price && (
+                        <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm z-10">
+                          {i18n.language === 'en' ? 'SALE' : 'ราคาพิเศษ'}
                         </div>
                       )}
+                      
+                      {/* Out of stock badge */}
                       {product.stock === 0 && (
-                        <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-[2px] flex items-center justify-center rounded-t-2xl z-10">
-                          <span className="bg-gray-900 text-white px-3 py-1 rounded-full text-[10px] font-bold">{t('sold_out')}</span>
+                        <div className="absolute inset-0 bg-white/40 dark:bg-black/60 flex items-center justify-center z-10">
+                          <span className="bg-gray-900/90 text-white px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wider backdrop-blur-sm">
+                            {i18n.language === 'en' ? 'OUT OF STOCK' : 'สินค้าหมด'}
+                          </span>
                         </div>
                       )}
                     </div>
 
-                    <div className="p-3 flex-1 flex flex-col">
+                    <div className="p-3 flex-1 flex flex-col bg-orange-50 dark:bg-gray-800/80">
                       <h3 className="text-[13px] md:text-sm font-medium text-gray-800 leading-snug line-clamp-2 min-h-[2.75rem] md:min-h-[3rem] dark:text-gray-100">
                         {i18n.language === 'en' && product.name_en ? product.name_en : product.name_th}
                       </h3>
@@ -324,25 +436,25 @@ export const HomePage: React.FC = () => {
             className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-50 mb-[env(safe-area-inset-bottom)]"
           >
             <div 
-              className="bg-orange-500 text-white rounded-2xl p-3 px-4 shadow-lg flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform"
+              className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/50 dark:border-gray-800/50 text-gray-900 dark:text-white rounded-[2rem] p-2 shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform"
               onClick={() => setCartOpen(true)}
             >
               <div className="flex items-center">
-                <div className="bg-white/20 w-10 h-10 rounded-full flex items-center justify-center relative ml-1">
-                  <ShoppingBag className="w-5 h-5 text-white" />
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-gray-900">
+                <div className="bg-orange-50 dark:bg-orange-900/30 w-12 h-12 rounded-full flex items-center justify-center relative ml-1">
+                  <ShoppingBag className="w-5 h-5 text-orange-500" />
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[11px] font-bold min-w-[20px] h-5 px-1 flex items-center justify-center rounded-full border-2 border-white dark:border-gray-900 shadow-sm">
                     {cartItemCount}
                   </span>
                 </div>
-                <div className="ml-3 flex flex-col">
-                  <span className="text-xs text-gray-300 font-medium">{t('total_price')}</span>
-                  <span className="text-sm font-bold tracking-wide">฿{cartTotal.toLocaleString()}</span>
+                <div className="ml-3 flex flex-col justify-center">
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-none mb-1.5">{i18n.language === 'en' ? 'Total Price' : 'ราคารวม'}</span>
+                  <span className="text-base font-bold text-orange-500 leading-none">฿{cartTotal.toLocaleString()}</span>
                 </div>
               </div>
-              <div className="bg-white text-orange-600 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1 shadow-sm">
-                {t('checkout')}
+              <div className="bg-gradient-to-r from-orange-500 to-orange-400 text-white h-11 px-5 rounded-full font-bold text-sm flex items-center gap-1.5 shadow-lg shadow-orange-500/25 mr-1">
+                {i18n.language === 'en' ? 'View Cart' : 'ดูตะกร้า'}
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
             </div>

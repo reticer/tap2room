@@ -11,9 +11,12 @@ import generatePayload from 'promptpay-qr';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '../../services/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getOptimizedImageUrl } from '../../utils/imageUtils';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const CartDrawer: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
   const { items, isCartOpen, setCartOpen, updateQuantity, removeItem, getCartTotal, clearCart } = useCartStore();
   
   const [roomNumber, setRoomNumber] = useState('');
@@ -33,23 +36,27 @@ export const CartDrawer: React.FC = () => {
   const [promptPayId, setPromptPayId] = useState('0000000000'); // Fallback while loading
 
   React.useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('value')
-          .eq('id', 'promptpay_id')
-          .single();
-        
-        if (!error && data?.value) {
-          setPromptPayId(data.value);
+    if (isCartOpen || isCheckoutModalOpen) {
+      const fetchSettings = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('app_settings')
+            .select('value')
+            .eq('id', 'promptpay_id')
+            .single();
+          
+          if (!error && data?.value) {
+            setPromptPayId(data.value);
+          } else if (error) {
+            console.error('Supabase error fetching promptpay settings:', error);
+          }
+        } catch (err) {
+          console.error('Error fetching promptpay settings:', err);
         }
-      } catch (err) {
-        console.error('Error fetching promptpay settings:', err);
-      }
-    };
-    fetchSettings();
-  }, []);
+      };
+      fetchSettings();
+    }
+  }, [isCartOpen, isCheckoutModalOpen]);
 
   const handleCheckout = () => {
     if (!roomNumber.trim()) {
@@ -74,48 +81,32 @@ export const CartDrawer: React.FC = () => {
   const submitOrder = async () => {
     setIsSubmitting(true);
     try {
-      const totalAmount = getCartTotal();
-      
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          room_number: roomNumber,
-          total_amount: totalAmount,
-          note: note,
-          status: 'pending',
-          payment_method: paymentMethod,
-          phone: paymentMethod === 'cod' ? phoneNumber : null
-        })
-        .select()
-        .single();
+      // Strip "ห้อง" or "room" prefix if user typed it, to prevent double prefix in Edge Function
+      const cleanRoomNumber = roomNumber.replace(/^(ห้อง|room)\s*/i, '').trim();
+
+      // Transform items to the format expected by the RPC
+      const orderItemsJson = items.map(item => ({
+        product_id: item.id,
+        quantity: item.quantity
+      }));
+
+      // Call the Secure RPC function to handle calculation and insertion on the server
+      const { error: orderError } = await supabase.rpc('place_order_secure', {
+        p_room_number: cleanRoomNumber,
+        p_note: note || null,
+        p_payment_method: paymentMethod,
+        p_phone: paymentMethod === 'cod' ? phoneNumber : null,
+        p_items: orderItemsJson
+      });
 
       if (orderError) throw orderError;
 
-      const orderItems = items.map(item => ({
-        order_id: orderData.id,
-        product_id: item.id,
-        quantity: item.quantity,
-        price: item.sale_price ? item.sale_price : item.price
-      }));
+      // Note: Stock is now deducted securely inside the place_order_secure RPC.
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
+      // Manually trigger product refetch to update stock on screen immediately
+      queryClient.invalidateQueries({ queryKey: ['products'] });
 
-      if (itemsError) throw itemsError;
-
-      // Log activity
-      await supabase.from('activity_logs').insert({
-        action: 'place_order',
-        details: { room: roomNumber, total: totalAmount, method: paymentMethod }
-      });
-
-      // Also deduct stock for each item (in a real app, this should be done securely in a DB function/trigger)
-      for (const item of items) {
-        await supabase.rpc('decrement_stock', { p_id: item.id, qty: item.quantity });
-      }
-
-        setOrderSuccess(true);
+      setOrderSuccess(true);
       setTimeout(() => {
         clearCart();
         setCartOpen(false);
@@ -169,7 +160,7 @@ export const CartDrawer: React.FC = () => {
         title={t('cart')}
       >
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-gray-400">
             <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
               <ShoppingCart className="w-10 h-10 text-gray-300 dark:text-gray-600" />
             </div>
@@ -177,8 +168,10 @@ export const CartDrawer: React.FC = () => {
             <p className="text-sm mt-1">{t('cart_empty_subtitle')}</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-6 h-full">
-            <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-1 pb-4">
+          <div className="flex flex-col h-full relative">
+            {/* Scrollable item list */}
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 pt-6 pb-6">
+              <div className="flex flex-col gap-3">
               <AnimatePresence>
                 {items.map((item) => (
                   <motion.div 
@@ -188,11 +181,11 @@ export const CartDrawer: React.FC = () => {
                     exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0 }}
                     className="flex items-center gap-4 bg-white dark:bg-ios-darkCard p-3 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 dark:border-gray-800"
                   >
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden flex-shrink-0">
+                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden flex-shrink-0 relative">
                       {item.image_url ? (
-                        <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                        <img src={getOptimizedImageUrl(item.image_url, 150, 70)} alt="" className="absolute inset-0 w-full h-full object-contain" />
                       ) : (
-                        <div className="w-full h-full flex justify-center items-center text-[10px] text-gray-400">No Img</div>
+                        <div className="absolute inset-0 flex justify-center items-center text-[10px] text-gray-400">No Img</div>
                       )}
                     </div>
                     <div className="flex-grow min-w-0">
@@ -229,9 +222,14 @@ export const CartDrawer: React.FC = () => {
                   </motion.div>
                 ))}
               </AnimatePresence>
+              </div>
             </div>
 
-            <div className="border-t border-gray-100 dark:border-gray-800 pt-5 flex flex-col gap-4 bg-ios-card dark:bg-ios-darkCard sticky bottom-0">
+            {/* Fade effect for scroll */}
+            <div className="w-full h-10 bg-gradient-to-t from-white dark:from-ios-darkCard to-transparent pointer-events-none -mt-10 z-10 relative" />
+
+            {/* Pinned checkout section - always visible at bottom */}
+            <div className="relative z-20 flex-shrink-0 border-t border-gray-100 dark:border-gray-800 px-6 pt-4 pb-6 bg-ios-card dark:bg-ios-darkCard flex flex-col gap-4">
               <div className="flex flex-col gap-4">
                 <div className="w-full flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('room_number')}</label>

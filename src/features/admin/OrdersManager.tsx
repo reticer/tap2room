@@ -267,7 +267,11 @@ export const OrdersManager: React.FC = () => {
             <div key={order.id} className="bg-white dark:bg-gray-800 rounded-3xl p-5 flex flex-col gap-4 shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 transition-shadow hover:shadow-md">
           <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700/50 pb-3">
             <div>
-              <h3 className="font-extrabold text-xl text-gray-900 dark:text-white">{order.room_number}</h3>
+              <h3 className="font-extrabold text-xl text-gray-900 dark:text-white">
+                {String(order.room_number).startsWith('ห้อง') || String(order.room_number).toLowerCase().startsWith('room') 
+                  ? order.room_number 
+                  : `ห้อง ${order.room_number}`}
+              </h3>
               <p className="text-xs font-medium text-gray-500 mt-0.5">{new Date(order.created_at).toLocaleString()}</p>
             </div>
             <div className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border
