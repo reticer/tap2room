@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { Button } from '../../components/ui/Button';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, ListChecks, CheckSquare, Square, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useInfiniteQuery, useQueryClient, useQuery } from '@tanstack/react-query';
@@ -78,6 +78,10 @@ export const OrdersManager: React.FC = () => {
     action: 'cancelled' | 'completed';
   }>({ isOpen: false, orderId: '', roomNumber: '', action: 'completed' });
 
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
+  const [bulkConfirmState, setBulkConfirmState] = useState(false);
+
   // Status filter state (persisted in localStorage)
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed' | 'cancelled'>(() => {
     return (localStorage.getItem('order_status_filter') as any) || 'all';
@@ -111,6 +115,21 @@ export const OrdersManager: React.FC = () => {
       newSet.add(orderId);
     }
     setExpandedOrders(newSet);
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedOrderIds(new Set());
+  };
+
+  const toggleOrderSelection = (orderId: string) => {
+    const newSet = new Set(selectedOrderIds);
+    if (newSet.has(orderId)) {
+      newSet.delete(orderId);
+    } else {
+      newSet.add(orderId);
+    }
+    setSelectedOrderIds(newSet);
   };
 
   const {
@@ -201,6 +220,21 @@ export const OrdersManager: React.FC = () => {
     }
   };
 
+  const deleteSelectedOrders = async () => {
+    if (selectedOrderIds.size === 0) return;
+    const ids = Array.from(selectedOrderIds);
+    const { error } = await supabase.from('orders').delete().in('id', ids);
+    if (!error) {
+      queryClient.invalidateQueries({ queryKey: ['orders_infinite'] });
+      queryClient.invalidateQueries({ queryKey: ['orders_statuses'] });
+      setIsSelectionMode(false);
+      setSelectedOrderIds(new Set());
+      setBulkConfirmState(false);
+    } else {
+      console.error(error);
+    }
+  };
+
   if (status === 'pending') return <div className="text-center p-8 text-gray-500">Loading orders...</div>;
 
   const groupedOrders = orders.reduce((groups: Record<string, any[]>, order: any) => {
@@ -216,7 +250,20 @@ export const OrdersManager: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 pb-20">
       <div className="flex flex-col gap-4 mb-2">
-        <h2 className="font-bold text-xl text-gray-900 dark:text-white px-2">{isEn ? 'Manage Orders' : 'จัดการออเดอร์'}</h2>
+        <div className="flex justify-between items-center px-2">
+          <h2 className="font-bold text-xl text-gray-900 dark:text-white">{isEn ? 'Manage Orders' : 'จัดการออเดอร์'}</h2>
+          <button 
+            onClick={toggleSelectionMode}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm border ${
+              isSelectionMode 
+                ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50' 
+                : 'bg-white text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <ListChecks className="w-4 h-4" />
+            {isEn ? (isSelectionMode ? 'Cancel Selection' : 'Select Orders') : (isSelectionMode ? 'ยกเลิก' : 'เลือกออเดอร์')}
+          </button>
+        </div>
         
         {/* Status Filters */}
         <div className="flex gap-2 overflow-x-auto pb-2 px-2 snap-x scrollbar-hide items-center">
@@ -292,9 +339,27 @@ export const OrdersManager: React.FC = () => {
                 hidden: { opacity: 0, y: 20 },
                 show: { opacity: 1, y: 0 }
               }}
-              className="bg-white dark:bg-gray-800 rounded-3xl p-5 flex flex-col gap-4 shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 transition-shadow hover:shadow-md"
+              onClick={() => {
+                if (isSelectionMode) toggleOrderSelection(order.id);
+              }}
+              style={{ cursor: isSelectionMode ? 'pointer' : 'default' }}
+              className={`bg-white dark:bg-gray-800 rounded-3xl p-5 flex flex-col gap-4 shadow-[0_2px_10px_rgba(0,0,0,0.05)] border transition-all hover:shadow-md relative overflow-hidden ${
+                isSelectionMode && selectedOrderIds.has(order.id) 
+                  ? 'border-blue-500 bg-blue-50/30 dark:border-blue-500/50 dark:bg-blue-900/10' 
+                  : 'border-gray-100 dark:border-gray-800'
+              }`}
             >
-              <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700/50 pb-3">
+              {isSelectionMode && (
+                <div className="absolute top-4 right-4 z-10 pointer-events-none">
+                  {selectedOrderIds.has(order.id) ? (
+                    <CheckSquare className="w-6 h-6 text-blue-500 fill-blue-50 dark:fill-blue-900/20" />
+                  ) : (
+                    <Square className="w-6 h-6 text-gray-300 dark:text-gray-600" />
+                  )}
+                </div>
+              )}
+              
+              <div className={`flex justify-between items-start border-b border-gray-100 dark:border-gray-700/50 pb-3 ${isSelectionMode ? 'pr-8' : ''}`}>
                 <div>
                   <h3 className="font-extrabold text-xl text-gray-900 dark:text-white">
                     {String(order.room_number).startsWith('ห้อง') || String(order.room_number).toLowerCase().startsWith('room') 
@@ -417,6 +482,36 @@ export const OrdersManager: React.FC = () => {
           )}
         </div>
       )}
+
+      <AnimatePresence>
+        {isSelectionMode && selectedOrderIds.size > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
+          >
+            <button 
+              onClick={() => setBulkConfirmState(true)}
+              className="bg-red-500 hover:bg-red-600 text-white font-bold px-6 py-3 rounded-full shadow-[0_8px_30px_rgb(239,68,68,0.3)] flex items-center gap-2 transition-transform active:scale-95 whitespace-nowrap"
+            >
+              <Trash2 className="w-5 h-5" />
+              {isEn ? `Delete ${selectedOrderIds.size} Orders` : `ลบ ${selectedOrderIds.size} รายการ`}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ConfirmDialog
+        isOpen={bulkConfirmState}
+        onClose={() => setBulkConfirmState(false)}
+        onConfirm={deleteSelectedOrders}
+        title={isEn ? 'Delete Selected Orders?' : 'ลบออเดอร์ที่เลือก?'}
+        subtitle={isEn ? `You are about to permanently delete ${selectedOrderIds.size} orders. This action cannot be undone.` : `คุณกำลังจะลบออเดอร์ถาวรจำนวน ${selectedOrderIds.size} รายการ ข้อมูลนี้จะไม่สามารถกู้คืนได้`}
+        confirmText={isEn ? 'Delete All' : 'ลบทิ้งทั้งหมด'}
+        cancelText={isEn ? 'Cancel' : 'ยกเลิก'}
+        isDestructive={true}
+      />
 
       <ConfirmDialog
         isOpen={confirmState.isOpen}

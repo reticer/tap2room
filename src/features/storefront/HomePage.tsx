@@ -418,12 +418,14 @@ export const HomePage: React.FC = () => {
                       <div className="mt-auto pt-3 flex items-end justify-between">
                         <div className="flex flex-col">
                           {product.sale_price ? (
-                            <div className="flex items-center gap-1.5 flex-wrap">
+                            <div className="flex items-center gap-1.5 flex-wrap min-h-[28px]">
                               <span className="text-orange-600 font-bold text-lg md:text-xl leading-none">฿{product.sale_price.toLocaleString()}</span>
                               <span className="font-medium text-gray-400 text-sm line-through">฿{product.price.toLocaleString()}</span>
                             </div>
                           ) : (
-                            <span className="text-gray-600 dark:text-gray-300 font-bold text-lg md:text-xl leading-none">฿{product.price.toLocaleString()}</span>
+                            <div className="flex items-center gap-1.5 flex-wrap min-h-[28px] pb-[2px]">
+                              <span className="text-gray-600 dark:text-gray-300 font-bold text-lg md:text-xl leading-none">฿{product.price.toLocaleString()}</span>
+                            </div>
                           )}
                         </div>
 
@@ -493,16 +495,16 @@ export const HomePage: React.FC = () => {
             } : {
               duration: 0.4, ease: "easeOut"
             }}
-            className="absolute -top-12 left-0 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-200 text-xs font-bold px-3 py-2 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 whitespace-nowrap origin-bottom-left"
+            className="absolute -top-12 left-0 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-200 text-xs font-bold px-3 py-2 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 whitespace-nowrap origin-bottom-left"
           >
             {i18n.language === 'en' ? 'Looking for something?' : 'หาสินค้าไม่เจอใช่ไหม?'}
             {/* Tooltip triangle */}
-            <div className="absolute -bottom-1.5 left-5 w-3 h-3 bg-gray-100 dark:bg-gray-800 border-b border-r border-gray-200 dark:border-gray-700 rotate-45" />
+            <div className="absolute -bottom-1.5 left-5 w-3 h-3 bg-gray-50 dark:bg-gray-800 border-b border-r border-gray-200 dark:border-gray-700 rotate-45" />
           </motion.div>
 
           <button 
             onClick={() => setFeedbackModalOpen(true)}
-            className="w-[52px] h-[52px] bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center shadow-lg border border-gray-200 dark:border-gray-700 active:scale-95 transition-transform"
+            className="w-[58px] h-[58px] bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center shadow-lg border border-gray-200 dark:border-gray-700 active:scale-95 transition-transform"
           >
             <Headphones className="w-6 h-6 text-orange-500" />
           </button>
