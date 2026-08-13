@@ -28,6 +28,7 @@ interface CartState {
   clearCart: () => void;
   setCartOpen: (isOpen: boolean) => void;
   getCartTotal: () => number;
+  syncPrices: (products: Product[]) => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -84,6 +85,26 @@ export const useCartStore = create<CartState>()(
           const effectivePrice = item.sale_price ? item.sale_price : item.price;
           return total + (effectivePrice * item.quantity);
         }, 0);
+      },
+      
+      syncPrices: (products) => {
+        set((state) => {
+          const newItems = state.items.map(item => {
+            const currentProduct = products.find(p => p.id === item.id);
+            if (currentProduct) {
+              return {
+                ...item,
+                price: currentProduct.price,
+                sale_price: currentProduct.sale_price,
+                stock: currentProduct.stock,
+                name_th: currentProduct.name_th,
+                name_en: currentProduct.name_en
+              };
+            }
+            return item;
+          });
+          return { items: newItems };
+        });
       }
     }),
     {

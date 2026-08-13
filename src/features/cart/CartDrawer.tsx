@@ -5,7 +5,7 @@ import { useCartStore } from '../../store/useCartStore';
 import { BottomSheet } from '../../components/ui/BottomSheet';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
-import { Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingCart, X } from 'lucide-react';
 import generatePayload from 'promptpay-qr';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '../../services/supabaseClient';
@@ -15,12 +15,20 @@ import { useQueryClient } from '@tanstack/react-query';
 
 export const CartDrawer: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
   const queryClient = useQueryClient();
-  const { items, isCartOpen, setCartOpen, updateQuantity, removeItem, getCartTotal, clearCart } = useCartStore();
+  const { items, isCartOpen, setCartOpen, updateQuantity, removeItem, getCartTotal, clearCart, syncPrices } = useCartStore();
   
   const [roomNumber, setRoomNumber] = useState('');
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
+  
+  // Coupon states
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponError, setCouponError] = useState('');
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [isCouponExpanded, setIsCouponExpanded] = useState(false);
   
   // Payment states
   const [paymentMethod, setPaymentMethod] = useState<'promptpay' | 'cod'>('promptpay');
@@ -55,14 +63,44 @@ export const CartDrawer: React.FC = () => {
       };
       fetchSettings();
     }
+    
+    // Sync cart items with latest DB prices to prevent checking out with old prices
+    if (isCartOpen && items.length > 0) {
+      const syncCartPrices = async () => {
+        const itemIds = items.map(item => item.id);
+        const { data, error } = await supabase.from('products').select('*').in('id', itemIds);
+        if (!error && data) {
+          syncPrices(data);
+        }
+      };
+      syncCartPrices();
+    }
   }, [isCartOpen, isCheckoutModalOpen]);
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!roomNumber.trim()) {
       setError(t('room_number') + ' is required');
       return;
     }
     setError('');
+
+    // Validation: Limit per room for coupon
+    if (appliedCoupon && appliedCoupon.limit_per_room) {
+      setIsSubmitting(true);
+      const cleanRoomNumber = roomNumber.replace(/^(ห้อง|room)\s*/i, '').trim();
+      const { data: hasUsed } = await supabase.rpc('check_coupon_usage', {
+        p_room: cleanRoomNumber,
+        p_code: appliedCoupon.code
+      });
+        
+      setIsSubmitting(false);
+      if (hasUsed) {
+        setCouponError(isEn ? 'This room has already used this coupon code.' : 'ห้องนี้เคยใช้โค้ดส่วนลดนี้ไปแล้ว');
+        setAppliedCoupon(null);
+        setIsCouponExpanded(true);
+        return;
+      }
+    }
     
     // Close cart drawer first so the payment modal is clearly visible
     setCartOpen(false);
@@ -89,16 +127,67 @@ export const CartDrawer: React.FC = () => {
         quantity: item.quantity
       }));
 
+      // Validation is already done in handleCheckout, but we keep a fallback check just in case
+      if (appliedCoupon && appliedCoupon.limit_per_room) {
+        const { data: hasUsed } = await supabase.rpc('check_coupon_usage', {
+          p_room: cleanRoomNumber,
+          p_code: appliedCoupon.code
+        });
+          
+        if (hasUsed) {
+          setCouponError(isEn ? 'This room has already used this coupon code.' : 'ห้องนี้เคยใช้โค้ดส่วนลดนี้ไปแล้ว');
+          setAppliedCoupon(null);
+          setIsCouponExpanded(true);
+          setCartOpen(true);
+          setCheckoutModalOpen(false);
+          setCodModalOpen(false);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Calculate final discount amount to send to backend
+      let finalDiscountAmount = 0;
+      if (appliedCoupon) {
+        const subtotal = getCartTotal();
+        if (appliedCoupon.discount_type === 'percent') {
+          finalDiscountAmount = subtotal * (appliedCoupon.discount_value / 100);
+        } else {
+          finalDiscountAmount = appliedCoupon.discount_value;
+        }
+        if (finalDiscountAmount > subtotal) finalDiscountAmount = subtotal;
+      }
+
       // Call the Secure RPC function to handle calculation and insertion on the server
-      const { error: orderError } = await supabase.rpc('place_order_secure', {
+      const { data: trackingCode, error: orderError } = await supabase.rpc('place_order_secure', {
         p_room_number: cleanRoomNumber,
         p_note: note || null,
         p_payment_method: paymentMethod,
         p_phone: paymentMethod === 'cod' ? phoneNumber : null,
-        p_items: orderItemsJson
+        p_items: orderItemsJson,
+        p_coupon_code: appliedCoupon ? appliedCoupon.code : null,
+        p_discount_amount: finalDiscountAmount
       });
 
       if (orderError) throw orderError;
+
+      if (trackingCode) {
+        // Read existing array or initialize empty
+        const stored = localStorage.getItem('tap2room_active_orders');
+        let activeOrders: string[] = [];
+        try {
+          if (stored) activeOrders = JSON.parse(stored);
+        } catch(e) {}
+        
+        // Add new tracking code if not exists
+        if (!activeOrders.includes(trackingCode)) {
+          activeOrders.push(trackingCode);
+          localStorage.setItem('tap2room_active_orders', JSON.stringify(activeOrders));
+        }
+        
+        // Force an event so other components (like HomePage or MyOrdersModal) can detect the change
+        window.dispatchEvent(new Event('tap2room_order_placed'));
+      }
 
       // Note: Stock is now deducted securely inside the place_order_secure RPC.
 
@@ -115,6 +204,8 @@ export const CartDrawer: React.FC = () => {
         setRoomNumber('');
         setNote('');
         setPhoneNumber('');
+        setAppliedCoupon(null);
+        setCouponCode('');
         // We will just let the success animation show and close the cart automatically.
       }, 3000);
 
@@ -145,9 +236,83 @@ export const CartDrawer: React.FC = () => {
     submitOrder();
   };
 
-  const total = getCartTotal();
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setIsApplyingCoupon(true);
+    setCouponError('');
+    
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('code', couponCode.toUpperCase().trim())
+      .eq('is_active', true)
+      .single();
+
+    setIsApplyingCoupon(false);
+    
+    if (error || !data) {
+      setCouponError(isEn ? 'Invalid or expired coupon' : 'โค้ดส่วนลดไม่ถูกต้องหรือหมดอายุ');
+      return;
+    }
+    
+    // Check usage limit
+    if (data.usage_limit !== null && data.used_count >= data.usage_limit) {
+      setCouponError(isEn ? 'Coupon usage limit reached' : 'โค้ดส่วนลดถูกใช้ครบตามจำนวนแล้ว');
+      return;
+    }
+    
+    // Check min purchase
+    const currentSubtotal = getCartTotal();
+    if (data.min_purchase && currentSubtotal < data.min_purchase) {
+      setCouponError(isEn ? `Minimum purchase of ฿${data.min_purchase} required` : `ต้องซื้อขั้นต่ำ ฿${data.min_purchase}`);
+      return;
+    }
+    
+    // Check start date
+    if (data.start_date) {
+      const startDate = new Date(data.start_date);
+      startDate.setHours(0, 0, 0, 0);
+      if (startDate > new Date()) {
+        setCouponError(isEn ? 'Coupon is not yet valid' : 'โค้ดส่วนลดนี้ยังไม่ถึงเวลาใช้งาน');
+        return;
+      }
+    }
+
+    // Check expiration date
+    if (data.end_date) {
+      const endDate = new Date(data.end_date);
+      endDate.setHours(23, 59, 59, 999);
+      if (endDate < new Date()) {
+        setCouponError(isEn ? 'Coupon expired' : 'โค้ดส่วนลดหมดอายุแล้ว');
+        return;
+      }
+    }
+    
+    setAppliedCoupon(data);
+    setCouponCode('');
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+  };
+
+  const subtotal = getCartTotal();
   const originalTotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const hasDiscount = originalTotal > total;
+  const hasDiscount = originalTotal > subtotal;
+  
+  let finalDiscount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.discount_type === 'percent') {
+      finalDiscount = subtotal * (appliedCoupon.discount_value / 100);
+    } else {
+      finalDiscount = appliedCoupon.discount_value;
+    }
+    if (finalDiscount > subtotal) finalDiscount = subtotal;
+  }
+  
+  const total = subtotal - finalDiscount;
   
   const qrPayload = generatePayload(promptPayId, { amount: total });
 
@@ -176,9 +341,9 @@ export const CartDrawer: React.FC = () => {
                 {items.map((item) => (
                   <motion.div 
                     key={item.id} 
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0 }}
+                    initial={{ opacity: 0, x: -20, height: 0 }}
+                    animate={{ opacity: 1, x: 0, height: 'auto' }}
+                    exit={{ opacity: 0, x: 20, height: 0, padding: 0, margin: 0, border: 0 }}
                     className="flex items-center gap-4 bg-white dark:bg-ios-darkCard p-3 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 dark:border-gray-800"
                   >
                     <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden flex-shrink-0 relative">
@@ -229,8 +394,8 @@ export const CartDrawer: React.FC = () => {
             <div className="w-full h-10 bg-gradient-to-t from-[#FFFDF9] dark:from-gray-900 to-transparent pointer-events-none -mt-10 z-10 relative" />
 
             {/* Pinned checkout section - always visible at bottom */}
-            <div className="relative z-20 flex-shrink-0 border-t border-orange-100/50 dark:border-gray-800 px-6 pt-3 pb-5 bg-[#FFFDF9] dark:bg-gray-900 flex flex-col gap-3">
-              <div className="flex gap-3 items-end">
+            <motion.div layout className="relative z-20 flex-shrink-0 border-t border-orange-100/50 dark:border-gray-800 px-6 pt-3 pb-5 bg-[#FFFDF9] dark:bg-gray-900 flex flex-col gap-3">
+              <motion.div layout className="flex gap-3 items-end">
                 <div className="w-[35%] flex flex-col gap-1">
                   <label className="text-[13px] font-semibold text-gray-700 dark:text-gray-300 truncate">{t('room_number')}</label>
                   <select
@@ -254,7 +419,7 @@ export const CartDrawer: React.FC = () => {
                     className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 h-11 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-primary/20 focus:border-ios-primary transition-all shadow-sm outline-none"
                   />
                 </div>
-              </div>
+              </motion.div>
               {error && <span className="text-xs font-bold text-red-500 -mt-2">{error}</span>}
 
               {/* Payment Method Selector */}
@@ -289,21 +454,90 @@ export const CartDrawer: React.FC = () => {
                   </button>
                 </div>
               </div>
-              
-              <div className="flex justify-between items-center text-xl font-extrabold mt-1 border-t border-gray-100 dark:border-gray-800 pt-3">
-                <span>{t('total')}</span>
-                <div className="flex items-center gap-3">
-                  {hasDiscount && (
-                    <span className="text-gray-400 line-through text-lg font-medium">฿{originalTotal.toLocaleString()}</span>
+
+              {/* Promo Code Section */}
+              <motion.div layout className="flex flex-col gap-1 mt-1 border-t border-gray-100 dark:border-gray-800 pt-3">
+                <div className="flex justify-between items-center cursor-pointer" onClick={() => !appliedCoupon && setIsCouponExpanded(!isCouponExpanded)}>
+                  <label className="text-[13px] font-semibold text-gray-700 dark:text-gray-300 pointer-events-none">{isEn ? 'Promo Code' : 'โค้ดส่วนลด'}</label>
+                  {!appliedCoupon && !isCouponExpanded && (
+                    <button 
+                      type="button"
+                      className="text-ios-primary text-xs font-bold bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg"
+                    >
+                      {isEn ? '+ Add Code' : '+ ใส่โค้ดส่วนลด'}
+                    </button>
                   )}
-                  <span className="text-ios-primary text-2xl">฿{total.toLocaleString()}</span>
+                </div>
+                
+                <AnimatePresence>
+                  {appliedCoupon ? (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-3 py-2.5 mt-1"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="bg-green-500 text-white p-1 rounded-full"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg></div>
+                        <span className="font-bold text-green-700 dark:text-green-400 text-sm">{appliedCoupon.code}</span>
+                        <span className="text-xs text-green-600 dark:text-green-500">(-฿{finalDiscount.toLocaleString()})</span>
+                      </div>
+                      <button onClick={removeCoupon} className="text-gray-400 hover:text-red-500 transition-colors">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </motion.div>
+                  ) : isCouponExpanded ? (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                      animate={{ opacity: 1, height: 'auto', marginTop: 4 }}
+                      exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="flex gap-2">
+                        <input 
+                          type="text"
+                          placeholder={isEn ? "Enter code" : "ใส่โค้ดส่วนลด"}
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                          className={`flex-1 bg-gray-50 dark:bg-gray-800 border ${couponError ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} rounded-xl px-3 h-11 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-ios-primary/20 focus:border-ios-primary transition-all outline-none`}
+                        />
+                        <button 
+                          onClick={applyCoupon}
+                          disabled={!couponCode.trim() || isApplyingCoupon}
+                          className="bg-ios-primary hover:bg-orange-600 text-white font-bold px-4 rounded-xl h-11 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isApplyingCoupon ? '...' : (isEn ? 'Apply' : 'ใช้โค้ด')}
+                        </button>
+                      </div>
+                      {couponError && <p className="text-xs font-bold text-red-500 mt-1.5">{couponError}</p>}
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+              </motion.div>
+              
+              <div className="flex flex-col gap-1 mt-2 border-t border-gray-100 dark:border-gray-800 pt-3">
+                {appliedCoupon && (
+                  <div className="flex justify-between items-center text-sm font-bold text-green-600 dark:text-green-400">
+                    <span>{isEn ? 'Discount' : 'ส่วนลด'} ({appliedCoupon.code})</span>
+                    <span>-฿{finalDiscount.toLocaleString()}</span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between items-center text-xl font-extrabold mt-0.5">
+                  <span>{t('total')}</span>
+                  <div className="flex items-center gap-3">
+                    {hasDiscount && (
+                      <span className="text-gray-400 line-through text-lg font-medium">฿{originalTotal.toLocaleString()}</span>
+                    )}
+                    <span className="text-ios-primary text-2xl">฿{total.toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
               
-              <Button fullWidth size="lg" onClick={handleCheckout} className="shadow-lg shadow-ios-primary/30 mt-1 font-bold text-lg">
+              <Button fullWidth size="lg" onClick={handleCheckout} isLoading={isSubmitting} className="shadow-lg shadow-ios-primary/30 mt-1 font-bold text-lg">
                 {t('checkout')}
               </Button>
-            </div>
+            </motion.div>
           </div>
         )}
       </BottomSheet>
@@ -325,7 +559,17 @@ export const CartDrawer: React.FC = () => {
               </svg>
             </div>
             <h3 className="text-2xl font-extrabold text-ios-success">{t('order_success')}</h3>
-            <p className="text-gray-500 font-medium">Your order has been sent to the admin.</p>
+            <p className="text-gray-500 font-medium text-center">
+              {i18n.language === 'en' 
+                ? 'Your order is confirmed.' 
+                : 'ทางเราได้รับออเดอร์แล้ว'}
+              <br/>
+              <span className="text-sm mt-1 inline-block text-orange-600 dark:text-orange-400">
+                {i18n.language === 'en' 
+                  ? 'Track your status in "My Orders"' 
+                  : 'ติดตามสถานะได้ที่ "ออเดอร์ของฉัน"'}
+              </span>
+            </p>
           </motion.div>
         ) : (
           <div className="flex flex-col items-center gap-6 py-4">
@@ -377,7 +621,17 @@ export const CartDrawer: React.FC = () => {
               </svg>
             </div>
             <h3 className="text-2xl font-extrabold text-ios-success">{t('order_success')}</h3>
-            <p className="text-gray-500 font-medium">Your order has been sent to the admin.</p>
+            <p className="text-gray-500 font-medium text-center">
+              {i18n.language === 'en' 
+                ? 'Your order is confirmed.' 
+                : 'ทางเราได้รับออเดอร์แล้ว'}
+              <br/>
+              <span className="text-sm mt-1 inline-block text-orange-600 dark:text-orange-400">
+                {i18n.language === 'en' 
+                  ? 'Track your status in "My Orders"' 
+                  : 'ติดตามสถานะได้ที่ "ออเดอร์ของฉัน"'}
+              </span>
+            </p>
           </motion.div>
         ) : (
           <div className="flex flex-col gap-6 py-4">

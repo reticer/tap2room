@@ -5,10 +5,11 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { supabase } from '../../services/supabaseClient';
-import { Bell, Activity, LogOut, Trash2, KeyRound, Clock, MessageSquare } from 'lucide-react';
+import { Bell, Activity, LogOut, Trash2, KeyRound, Clock, MessageSquare, Ticket } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { subscribeToPushNotifications } from '../../utils/pushUtils';
 import { FeedbackListModal } from './FeedbackListModal';
+import { CouponManagerModal } from './CouponManagerModal';
 
 export const SettingsManager: React.FC = () => {
   const { i18n } = useTranslation();
@@ -39,6 +40,7 @@ export const SettingsManager: React.FC = () => {
 
   const [unreadFeedbackCount, setUnreadFeedbackCount] = useState(0);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
 
   useEffect(() => {
     fetchUnreadFeedbackCount();
@@ -203,6 +205,27 @@ export const SettingsManager: React.FC = () => {
       
       <Card className="p-4 flex flex-col gap-4">
         
+        {/* Manage Coupons */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center">
+              <Ticket className="w-5 h-5 text-orange-500" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-gray-900 dark:text-white">{isEn ? 'Promo Coupons' : 'คูปองส่วนลด'}</h3>
+              <p className="text-xs text-gray-500">{isEn ? 'Manage promotional codes' : 'จัดการโค้ดส่วนลดและโปรโมชั่น'}</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setIsCouponModalOpen(true)}
+            className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-semibold rounded-xl transition-colors"
+          >
+            {isEn ? 'Manage' : 'จัดการ'}
+          </button>
+        </div>
+        
+        <div className="h-px bg-gray-100 dark:bg-gray-800 w-full" />
+
         {/* Customer Feedback */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -385,7 +408,7 @@ export const SettingsManager: React.FC = () => {
                   </p>
                   <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
                     <Clock className="w-3 h-3" />
-                    {new Date(log.created_at).toLocaleString()}
+                    {new Date(log.created_at).toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
                   </div>
                 </div>
               </div>
@@ -456,11 +479,16 @@ export const SettingsManager: React.FC = () => {
 
       {/* Feedback Modal */}
       <FeedbackListModal 
-        isOpen={isFeedbackModalOpen} 
+        isOpen={isFeedbackModalOpen}
         onClose={() => {
           setIsFeedbackModalOpen(false);
           fetchUnreadFeedbackCount(); // Refresh count on close in case they were marked read
         }} 
+      />
+
+      <CouponManagerModal
+        isOpen={isCouponModalOpen}
+        onClose={() => setIsCouponModalOpen(false)}
       />
     </div>
   );

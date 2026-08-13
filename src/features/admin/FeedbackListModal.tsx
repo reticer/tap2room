@@ -100,7 +100,7 @@ export const FeedbackListModal: React.FC<FeedbackListModalProps> = ({ isOpen, on
                 
                 <div className="flex items-center justify-between mt-3">
                   <span className="text-xs text-gray-400">
-                    {new Date(item.created_at).toLocaleString()}
+                    {new Date(item.created_at).toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
                   </span>
                   
                   <div className="flex gap-2">

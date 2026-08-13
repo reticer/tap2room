@@ -26,7 +26,7 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, subtitle, confirmTex
                 </div>
               )}
               
-              <h3 className="font-extrabold text-[1.15rem] text-gray-900 dark:text-white leading-snug mb-2">
+              <h3 className="font-semibold text-[1.15rem] text-gray-900 dark:text-white leading-snug mb-2">
                 {title}
               </h3>
               
@@ -40,13 +40,13 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, subtitle, confirmTex
             <div className="flex gap-3 w-full">
               <button 
                 onClick={onClose} 
-                className="flex-1 py-3.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-2xl transition-colors"
+                className="flex-1 py-3.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-2xl transition-colors"
               >
                 {cancelText}
               </button>
               <button 
                 onClick={() => { onConfirm(); onClose(); }} 
-                className={`flex-1 py-3.5 text-white font-bold rounded-2xl transition-colors shadow-sm ${
+                className={`flex-1 py-3.5 text-white font-semibold rounded-2xl transition-colors shadow-sm ${
                   isDestructive 
                     ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20' 
                     : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20'
@@ -75,19 +75,20 @@ export const OrdersManager: React.FC = () => {
     isOpen: boolean;
     orderId: string;
     roomNumber: string;
-    action: 'cancelled' | 'completed';
-  }>({ isOpen: false, orderId: '', roomNumber: '', action: 'completed' });
+    couponCode: string | null;
+    action: 'cancelled' | 'preparing' | 'completed';
+  }>({ isOpen: false, orderId: '', roomNumber: '', couponCode: null, action: 'completed' });
 
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   const [bulkConfirmState, setBulkConfirmState] = useState(false);
 
   // Status filter state (persisted in localStorage)
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed' | 'cancelled'>(() => {
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'preparing' | 'completed' | 'cancelled'>(() => {
     return (localStorage.getItem('order_status_filter') as any) || 'all';
   });
 
-  const handleSetFilter = (filter: 'all' | 'pending' | 'completed' | 'cancelled') => {
+  const handleSetFilter = (filter: 'all' | 'pending' | 'preparing' | 'completed' | 'cancelled') => {
     setStatusFilter(filter);
     localStorage.setItem('order_status_filter', filter);
   };
@@ -101,7 +102,7 @@ export const OrdersManager: React.FC = () => {
     }
   });
 
-  const getStatusCount = (status: 'all' | 'pending' | 'completed' | 'cancelled') => {
+  const getStatusCount = (status: 'all' | 'pending' | 'preparing' | 'completed' | 'cancelled') => {
     if (!allStatuses) return 0;
     if (status === 'all') return allStatuses.length;
     return allStatuses.filter(o => o.status === status).length;
@@ -196,9 +197,23 @@ export const OrdersManager: React.FC = () => {
     };
   }, [queryClient]);
 
-  const updateStatus = async (id: string, newStatus: string, room: string) => {
-    const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', id);
+  const updateStatus = async (id: string, newStatus: string, room: string, couponCode?: string | null) => {
+    const now = new Date().toISOString();
+    const updateData: any = { status: newStatus };
+    if (newStatus === 'preparing') updateData.preparing_at = now;
+    if (newStatus === 'completed') updateData.completed_at = now;
+    if (newStatus === 'cancelled') updateData.cancelled_at = now;
+
+    const { error } = await supabase.from('orders').update(updateData).eq('id', id);
     if (!error) {
+      if (newStatus === 'cancelled' && couponCode) {
+        // Decrement used_count for the coupon
+        const { data: couponData } = await supabase.from('coupons').select('used_count').eq('code', couponCode).single();
+        if (couponData && couponData.used_count > 0) {
+          await supabase.from('coupons').update({ used_count: couponData.used_count - 1 }).eq('code', couponCode);
+        }
+      }
+
       // Optimistic UI update or just wait for real-time invalidate
       queryClient.setQueryData(['orders_infinite'], (oldData: any) => {
         if (!oldData) return oldData;
@@ -206,7 +221,7 @@ export const OrdersManager: React.FC = () => {
           ...oldData,
           pages: oldData.pages.map((page: any) => 
             page.map((order: any) => 
-              order.id === id ? { ...order, status: newStatus } : order
+              order.id === id ? { ...order, ...updateData } : order
             )
           )
         };
@@ -285,7 +300,17 @@ export const OrdersManager: React.FC = () => {
                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
             }`}
           >
-            {isEn ? 'Pending' : 'กำลังดำเนินการ'} ({getStatusCount('pending')})
+            {isEn ? 'Pending' : 'รับออเดอร์'} ({getStatusCount('pending')})
+          </button>
+          <button
+            onClick={() => handleSetFilter('preparing')}
+            className={`snap-start whitespace-nowrap px-4 py-2 rounded-full font-semibold text-sm transition-all ${
+              statusFilter === 'preparing' 
+                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-md' 
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {isEn ? 'Preparing' : 'จัดเตรียมสินค้า'} ({getStatusCount('preparing')})
           </button>
           <button
             onClick={() => handleSetFilter('completed')}
@@ -360,16 +385,22 @@ export const OrdersManager: React.FC = () => {
               )}
               
               <div className={`flex justify-between items-start border-b border-gray-100 dark:border-gray-700/50 pb-3 ${isSelectionMode ? 'pr-8' : ''}`}>
-                <div>
-                  <h3 className="font-extrabold text-xl text-gray-900 dark:text-white">
-                    {String(order.room_number).startsWith('ห้อง') || String(order.room_number).toLowerCase().startsWith('room') 
-                      ? order.room_number 
-                      : `ห้อง ${order.room_number}`}
-                  </h3>
-                  <p className="text-xs font-medium text-gray-500 mt-0.5">{new Date(order.created_at).toLocaleString()}</p>
+                <div className="flex flex-col gap-1.5 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-bold text-[1.05rem] text-gray-900 dark:text-white leading-none whitespace-nowrap">
+                      {order.tracking_code || 'No Tracking'}
+                    </h3>
+                    <div className="bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full font-semibold text-[10px] border border-orange-100 dark:border-orange-800/50 leading-none whitespace-nowrap">
+                      {String(order.room_number).startsWith('ห้อง') || String(order.room_number).toLowerCase().startsWith('room') 
+                        ? order.room_number 
+                        : `ห้อง ${order.room_number}`}
+                    </div>
+                  </div>
+                  <p className="text-[11px] font-medium text-gray-500 leading-none whitespace-nowrap truncate">{new Date(order.created_at).toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}</p>
                 </div>
-                <div className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border
+                <div className={`px-2.5 py-1 rounded-md text-[10px] tracking-wider font-bold shadow-sm border whitespace-nowrap shrink-0
                   ${order.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/50' : ''}
+                  ${order.status === 'preparing' ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50' : ''}
                   ${order.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/50' : ''}
                   ${order.status === 'cancelled' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/50' : ''}
                 `}>
@@ -445,26 +476,69 @@ export const OrdersManager: React.FC = () => {
                 )}
               </div>
 
-              <div className="flex justify-between items-center pt-1 font-bold">
+              {order.coupon_code && (
+                <div className="flex justify-between items-center pt-2 mt-2 border-t border-gray-100 dark:border-gray-700/50 text-sm">
+                  <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                    <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                    {isEn ? 'Promo Code:' : 'โค้ดส่วนลด:'} <span className="font-bold text-gray-800 dark:text-gray-200">{order.coupon_code}</span>
+                  </span>
+                  <span className="font-bold text-green-600 dark:text-green-400">-฿{order.discount_amount}</span>
+                </div>
+              )}
+
+              <div className={`flex justify-between items-center pt-2 font-bold ${!order.coupon_code ? 'mt-2 border-t border-gray-100 dark:border-gray-700/50' : ''}`}>
                 <span>{isEn ? 'Total' : 'ยอดรวม'}</span>
                 <span className="text-ios-primary text-lg">฿{order.total_amount}</span>
               </div>
 
-              {order.status === 'pending' && (
+              {(order.preparing_at || order.completed_at || order.cancelled_at) && (
+                <div className="flex flex-col gap-1 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700/50 text-[10px] text-gray-500 font-medium">
+                  {order.preparing_at && (
+                    <div className="flex justify-between">
+                      <span>{isEn ? 'Prepared at:' : 'เริ่มจัดเตรียม:'}</span>
+                      <span>{new Date(order.preparing_at).toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                    </div>
+                  )}
+                  {order.completed_at && (
+                    <div className="flex justify-between">
+                      <span>{isEn ? 'Completed at:' : 'จัดส่งสำเร็จ:'}</span>
+                      <span>{new Date(order.completed_at).toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                    </div>
+                  )}
+                  {order.cancelled_at && (
+                    <div className="flex justify-between text-rose-500">
+                      <span>{isEn ? 'Cancelled at:' : 'ยกเลิกเมื่อ:'}</span>
+                      <span>{new Date(order.cancelled_at).toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {(order.status === 'pending' || order.status === 'preparing') && (
                 <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/50">
                   <Button 
                     variant="secondary" 
                     className="flex-1 !rounded-xl !bg-rose-50 !text-rose-600 hover:!bg-rose-100 dark:!bg-rose-900/20 dark:!text-rose-400 dark:hover:!bg-rose-900/40"
-                    onClick={() => setConfirmState({ isOpen: true, orderId: order.id, roomNumber: order.room_number, action: 'cancelled' })}
+                    onClick={() => setConfirmState({ isOpen: true, orderId: order.id, roomNumber: order.room_number, couponCode: order.coupon_code || null, action: 'cancelled' })}
                   >
                     {isEn ? 'Cancel' : 'ยกเลิก'}
                   </Button>
-                  <Button 
-                    className="flex-1 !rounded-xl !bg-emerald-500 focus:ring-emerald-500/50 hover:bg-emerald-600 shadow-md px-1"
-                    onClick={() => setConfirmState({ isOpen: true, orderId: order.id, roomNumber: order.room_number, action: 'completed' })}
-                  >
-                    {t('delivered_successfully')}
-                  </Button>
+                  {order.status === 'pending' && (
+                    <Button 
+                      className="flex-1 !rounded-xl !bg-blue-500 focus:ring-blue-500/50 hover:bg-blue-600 shadow-md px-1 text-white"
+                      onClick={() => setConfirmState({ isOpen: true, orderId: order.id, roomNumber: order.room_number, couponCode: order.coupon_code || null, action: 'preparing' })}
+                    >
+                      {isEn ? 'Prepare' : 'จัดเตรียมสินค้า'}
+                    </Button>
+                  )}
+                  {order.status === 'preparing' && (
+                    <Button 
+                      className="flex-1 !rounded-xl !bg-emerald-500 focus:ring-emerald-500/50 hover:bg-emerald-600 shadow-md px-1"
+                      onClick={() => setConfirmState({ isOpen: true, orderId: order.id, roomNumber: order.room_number, couponCode: order.coupon_code || null, action: 'completed' })}
+                    >
+                      {t('delivered_successfully')}
+                    </Button>
+                  )}
                 </div>
               )}
             </motion.div>
@@ -516,12 +590,16 @@ export const OrdersManager: React.FC = () => {
       <ConfirmDialog
         isOpen={confirmState.isOpen}
         onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
-        onConfirm={() => updateStatus(confirmState.orderId, confirmState.action, confirmState.roomNumber)}
-        title={confirmState.action === 'cancelled' ? t('confirm_cancel_order') : t('confirm_complete_order')}
+        onConfirm={() => updateStatus(confirmState.orderId, confirmState.action, confirmState.roomNumber, confirmState.couponCode)}
+        title={
+          confirmState.action === 'cancelled' ? t('confirm_cancel_order') : 
+          confirmState.action === 'preparing' ? (isEn ? 'Prepare Order?' : 'จัดเตรียมสินค้า?') :
+          t('confirm_complete_order')
+        }
         subtitle={
-          confirmState.action === 'cancelled'
-            ? (isEn ? 'This action cannot be undone.' : 'ข้อมูลจะถูกลบออกจากระบบทันที')
-            : (isEn ? 'Confirm delivery of this order.' : 'ยืนยันการจัดส่งสินค้านี้')
+          confirmState.action === 'cancelled' ? (isEn ? 'This order will be cancelled.' : 'ออเดอร์นี้จะถูกยกเลิก') :
+          confirmState.action === 'preparing' ? (isEn ? 'Confirm starting preparation for this order.' : 'ยืนยันเริ่มจัดเตรียมออเดอร์นี้') :
+          (isEn ? 'Confirm delivery of this order.' : 'ยืนยันการจัดส่งสินค้านี้')
         }
         confirmText={isEn ? 'Confirm' : 'ยืนยัน'}
         cancelText={isEn ? 'Cancel' : 'ยกเลิก'}
