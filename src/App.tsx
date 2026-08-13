@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { HomePage } from './features/storefront/HomePage';
-import { AdminDashboard } from './features/admin/AdminDashboard';
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, Suspense } from 'react';
+
+// Use React.lazy for Code Splitting
+const HomePage = React.lazy(() => import('./features/storefront/HomePage').then(module => ({ default: module.HomePage })));
+const AdminDashboard = React.lazy(() => import('./features/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
 const queryClient = new QueryClient();
 
@@ -31,15 +33,24 @@ function RouteTracker() {
   return null;
 }
 
+// Simple loading fallback
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-black">
+    <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <RouteTracker />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-        </Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </QueryClientProvider>
   );
