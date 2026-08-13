@@ -4,7 +4,9 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { supabase } from '../../services/supabaseClient';
 import { useTranslation } from 'react-i18next';
-import { Trash2, Plus, Ticket } from 'lucide-react';
+import { Ticket, Plus, X, Trash2, Calendar } from 'lucide-react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface CouponManagerModalProps {
@@ -26,8 +28,8 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
   const [discountValue, setDiscountValue] = useState('');
   const [minPurchase, setMinPurchase] = useState('');
   const [usageLimit, setUsageLimit] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const [limitPerRoom, setLimitPerRoom] = useState(false);
   
   // Confirm Delete
@@ -61,8 +63,8 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
     setDiscountValue('');
     setMinPurchase('');
     setUsageLimit('');
-    setStartDate('');
-    setEndDate('');
+    setStartDate(null);
+    setEndDate(null);
     setLimitPerRoom(false);
   };
 
@@ -79,8 +81,8 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
         discount_value: parseFloat(discountValue),
         min_purchase: minPurchase ? parseFloat(minPurchase) : 0,
         usage_limit: usageLimit ? parseInt(usageLimit) : null,
-        start_date: startDate ? new Date(startDate).toISOString() : null,
-        end_date: endDate ? new Date(endDate).toISOString() : null,
+        start_date: startDate ? startDate.toISOString() : null,
+        end_date: endDate ? endDate.toISOString() : null,
         limit_per_room: limitPerRoom
       }])
       .select();
@@ -252,31 +254,30 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-3">
                   <div className="flex-1 flex flex-col gap-1.5 min-w-0">
                     <span className="text-[11px] text-gray-500 font-bold ml-1 sm:ml-2">{isEn ? 'Start Date (Optional)' : 'เริ่มวันที่ (ไม่บังคับ)'}</span>
-                    <Input
-                      type="text"
-                      placeholder={isEn ? "dd/mm/yyyy" : "วว/ดด/ปปปป"}
-                      onFocus={(e) => (e.target.type = 'date')}
-                      onBlur={(e) => {
-                        if (!e.target.value) e.target.type = 'text';
-                      }}
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full text-sm px-4 !rounded-2xl bg-gray-50 border-transparent focus:border-orange-500 focus:ring-orange-500/20"
-                    />
+                    <div className="relative w-full">
+                      <DatePicker
+                        selected={startDate}
+                        onChange={(date) => setStartDate(date)}
+                        dateFormat="dd/MM/yyyy"
+                        placeholderText={isEn ? "dd/mm/yyyy" : "วว/ดด/ปปปป"}
+                        className="w-full text-sm pl-11 pr-4 !rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-transparent focus:bg-white dark:focus:bg-gray-800 focus:border-gray-900 dark:focus:border-white focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 h-12 outline-none transition-all text-gray-900 dark:text-white"
+                      />
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
                   <div className="flex-1 flex flex-col gap-1.5 min-w-0">
                     <span className="text-[11px] text-gray-500 font-bold ml-1 sm:ml-2">{isEn ? 'End Date (Optional)' : 'หมดอายุ (ไม่บังคับ)'}</span>
-                    <Input
-                      type="text"
-                      placeholder={isEn ? "dd/mm/yyyy" : "วว/ดด/ปปปป"}
-                      onFocus={(e) => (e.target.type = 'date')}
-                      onBlur={(e) => {
-                        if (!e.target.value) e.target.type = 'text';
-                      }}
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full text-sm px-4 !rounded-2xl bg-gray-50 border-transparent focus:border-orange-500 focus:ring-orange-500/20"
-                    />
+                    <div className="relative w-full">
+                      <DatePicker
+                        selected={endDate}
+                        onChange={(date) => setEndDate(date)}
+                        dateFormat="dd/MM/yyyy"
+                        placeholderText={isEn ? "dd/mm/yyyy" : "วว/ดด/ปปปป"}
+                        minDate={startDate || undefined}
+                        className="w-full text-sm pl-11 pr-4 !rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-transparent focus:bg-white dark:focus:bg-gray-800 focus:border-gray-900 dark:focus:border-white focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 h-12 outline-none transition-all text-gray-900 dark:text-white"
+                      />
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
 
