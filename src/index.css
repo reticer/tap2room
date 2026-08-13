@@ -46,5 +46,10 @@
   .react-datepicker-wrapper {
     width: 100%;
   }
+  
+  .react-datepicker-popper,
+  .react-datepicker-portal {
+    z-index: 9999 !important;
+  }
 }
 

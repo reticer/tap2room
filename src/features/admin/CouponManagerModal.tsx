@@ -4,7 +4,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { supabase } from '../../services/supabaseClient';
 import { useTranslation } from 'react-i18next';
-import { Ticket, Plus, X, Trash2, Calendar } from 'lucide-react';
+import { Ticket, Plus, Trash2, Calendar } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -257,9 +257,11 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
                     <div className="relative w-full">
                       <DatePicker
                         selected={startDate}
-                        onChange={(date) => setStartDate(date)}
+                        onChange={(date: Date | null) => setStartDate(date)}
                         dateFormat="dd/MM/yyyy"
                         placeholderText={isEn ? "dd/mm/yyyy" : "วว/ดด/ปปปป"}
+                        withPortal
+                        onFocus={(e) => e.target.blur()}
                         className="w-full text-sm pl-11 pr-4 !rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-transparent focus:bg-white dark:focus:bg-gray-800 focus:border-gray-900 dark:focus:border-white focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 h-12 outline-none transition-all text-gray-900 dark:text-white"
                       />
                       <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -270,10 +272,12 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
                     <div className="relative w-full">
                       <DatePicker
                         selected={endDate}
-                        onChange={(date) => setEndDate(date)}
+                        onChange={(date: Date | null) => setEndDate(date)}
                         dateFormat="dd/MM/yyyy"
                         placeholderText={isEn ? "dd/mm/yyyy" : "วว/ดด/ปปปป"}
                         minDate={startDate || undefined}
+                        withPortal
+                        onFocus={(e) => e.target.blur()}
                         className="w-full text-sm pl-11 pr-4 !rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-transparent focus:bg-white dark:focus:bg-gray-800 focus:border-gray-900 dark:focus:border-white focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 h-12 outline-none transition-all text-gray-900 dark:text-white"
                       />
                       <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
