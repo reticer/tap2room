@@ -174,7 +174,7 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ isOpen, onClose })
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70"
             onClick={onClose}
           />
           <motion.div
@@ -182,7 +182,7 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ isOpen, onClose })
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
             transition={{ type: "spring", duration: 0.5, bounce: 0.1 }}
-            className="bg-gray-50 dark:bg-gray-900 rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-lg relative z-10 shadow-2xl flex flex-col h-[85vh] sm:h-[80vh] overflow-hidden"
+            className="bg-gray-50 dark:bg-gray-900 rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-lg relative z-10 shadow-lg flex flex-col h-[85vh] sm:h-[80vh] overflow-hidden"
           >
             {/* Header */}
             <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-gray-900 z-10 sticky top-0">

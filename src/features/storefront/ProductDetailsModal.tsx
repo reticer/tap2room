@@ -47,7 +47,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t('product_details')} bgClass="bg-orange-50/80 dark:bg-gray-900">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('product_details')} bgClass="bg-[#FFFCF9] dark:bg-gray-900">
       <div className="flex flex-col gap-4">
         <div className="relative px-6">
           <div className="w-full aspect-square bg-white dark:bg-gray-800 relative overflow-hidden rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-orange-100/50 dark:border-gray-700">
@@ -62,7 +62,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
             {/* Out of stock badge */}
             {product.stock === 0 && (
               <div className="absolute inset-0 bg-white/40 dark:bg-black/60 flex items-center justify-center z-10">
-                <span className="bg-gray-900/90 text-white px-5 py-2 rounded-full text-[13px] font-bold tracking-wider backdrop-blur-sm">
+                <span className="bg-gray-900/95 text-white px-5 py-2 rounded-full text-[13px] font-bold tracking-wider">
                   {i18n.language === 'en' ? 'OUT OF STOCK' : 'สินค้าหมด'}
                 </span>
               </div>

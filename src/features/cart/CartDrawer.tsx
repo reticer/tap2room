@@ -337,7 +337,7 @@ export const CartDrawer: React.FC = () => {
             {/* Scrollable item list */}
             <div className="flex-1 min-h-0 overflow-y-auto px-6 pt-6 pb-6">
               <div className="flex flex-col gap-3">
-              <AnimatePresence>
+              <AnimatePresence initial={false}>
                 {items.map((item) => (
                   <motion.div 
                     key={item.id} 

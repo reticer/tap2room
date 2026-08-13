@@ -36,7 +36,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60"
           />
 
           {/* Sheet */}

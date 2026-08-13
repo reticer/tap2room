@@ -196,8 +196,8 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
       <AnimatePresence>
         {isCreating && (
           <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsCreating(false)} />
-            <motion.div initial={{ scale: 0.95, y: 20, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.95, y: 20, opacity: 0 }} className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] w-full max-w-[380px] relative z-10 shadow-2xl border border-gray-100 dark:border-gray-700">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60" onClick={() => setIsCreating(false)} />
+            <motion.div initial={{ scale: 0.95, y: 20, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.95, y: 20, opacity: 0 }} className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] w-full max-w-[380px] relative z-10 shadow-lg border border-gray-100 dark:border-gray-700">
               <h3 className="font-extrabold text-xl mb-6 text-gray-900 dark:text-white flex items-center gap-2">
                 <Ticket className="w-6 h-6 text-orange-500" />
                 {isEn ? 'New Coupon' : 'คูปองส่วนลดใหม่'}
@@ -249,23 +249,33 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
                   />
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-3">
                   <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-                    <span className="text-[11px] text-gray-500 font-bold ml-2">{isEn ? 'Start Date (Optional)' : 'เริ่มวันที่ (ไม่บังคับ)'}</span>
+                    <span className="text-[11px] text-gray-500 font-bold ml-1 sm:ml-2">{isEn ? 'Start Date (Optional)' : 'เริ่มวันที่ (ไม่บังคับ)'}</span>
                     <Input
-                      type="date"
+                      type="text"
+                      placeholder={isEn ? "dd/mm/yyyy" : "วว/ดด/ปปปป"}
+                      onFocus={(e) => (e.target.type = 'date')}
+                      onBlur={(e) => {
+                        if (!e.target.value) e.target.type = 'text';
+                      }}
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full text-sm !rounded-2xl bg-gray-50 dark:bg-gray-900 border-transparent focus:border-orange-500 focus:ring-orange-500/20"
+                      className="w-full text-sm px-4 !rounded-2xl bg-gray-50 border-transparent focus:border-orange-500 focus:ring-orange-500/20"
                     />
                   </div>
                   <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-                    <span className="text-[11px] text-gray-500 font-bold ml-2">{isEn ? 'End Date (Optional)' : 'หมดอายุ (ไม่บังคับ)'}</span>
+                    <span className="text-[11px] text-gray-500 font-bold ml-1 sm:ml-2">{isEn ? 'End Date (Optional)' : 'หมดอายุ (ไม่บังคับ)'}</span>
                     <Input
-                      type="date"
+                      type="text"
+                      placeholder={isEn ? "dd/mm/yyyy" : "วว/ดด/ปปปป"}
+                      onFocus={(e) => (e.target.type = 'date')}
+                      onBlur={(e) => {
+                        if (!e.target.value) e.target.type = 'text';
+                      }}
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full text-sm !rounded-2xl bg-gray-50 dark:bg-gray-900 border-transparent focus:border-orange-500 focus:ring-orange-500/20"
+                      className="w-full text-sm px-4 !rounded-2xl bg-gray-50 border-transparent focus:border-orange-500 focus:ring-orange-500/20"
                     />
                   </div>
                 </div>
@@ -304,8 +314,8 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
 
         {couponToDelete && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setCouponToDelete(null)} />
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-gray-800 p-6 rounded-3xl w-full max-w-[320px] relative z-10 text-center shadow-xl">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60" onClick={() => setCouponToDelete(null)} />
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-gray-800 p-6 rounded-3xl w-full max-w-[320px] relative z-10 text-center shadow-md">
               <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Trash2 className="w-7 h-7" />
               </div>

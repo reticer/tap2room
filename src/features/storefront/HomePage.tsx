@@ -173,7 +173,7 @@ export const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto min-h-screen bg-gray-50 dark:bg-black relative pb-32 shadow-2xl overflow-hidden">
+    <div className="max-w-5xl mx-auto min-h-screen bg-gray-50 dark:bg-black relative pb-32 shadow-lg overflow-hidden">
       
       {/* Store Closed Banner (Not Grayscaled) */}
       <AnimatePresence>
@@ -182,7 +182,7 @@ export const HomePage: React.FC = () => {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
-            className="fixed top-20 md:top-[calc(env(safe-area-inset-top)+4.5rem)] left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md bg-black/80 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-2xl shadow-black/50 flex flex-col items-center justify-center text-center mt-4"
+            className="fixed top-20 md:top-[calc(env(safe-area-inset-top)+4.5rem)] left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md bg-black/95 border border-white/10 rounded-2xl p-4 shadow-lg shadow-black/50 flex flex-col items-center justify-center text-center mt-4"
           >
             <div className="w-12 h-12 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center mb-2">
               <PackageOpen className="w-6 h-6" />
@@ -194,7 +194,7 @@ export const HomePage: React.FC = () => {
       </AnimatePresence>
 
       {/* 2. Sticky Glassmorphism Header (Interactive even when closed) */}
-      <header className="fixed top-0 w-full max-w-5xl z-40 bg-white/70 dark:bg-black/70 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50">
+      <header className="fixed top-0 w-full max-w-5xl z-40 bg-white/95 dark:bg-black/95 border-b border-gray-200/50 dark:border-gray-800/50">
         <div className="flex justify-between items-center h-14 px-4 md:px-8 relative z-50">
           {/* Empty spacer on mobile, hidden on desktop */}
           <div className="w-10 md:hidden"></div>
@@ -302,7 +302,7 @@ export const HomePage: React.FC = () => {
                   <motion.div
                     animate={{ rotate: [-2, 2, -2], y: [0, -2, 0] }}
                     transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
-                    className="z-10 absolute right-10 bottom-0 md:-bottom-2 drop-shadow-md"
+                    className="z-10 absolute right-10 bottom-0 md:-bottom-2"
                   >
                     <svg width="80" height="90" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M25 30 C25 5 55 5 55 30" stroke="#F5A97F" strokeWidth="6" strokeLinecap="round"/>
@@ -315,7 +315,7 @@ export const HomePage: React.FC = () => {
                   <motion.div
                     animate={{ rotate: [2, -2, 2], y: [0, -3, 0] }}
                     transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", delay: 0.5 }}
-                    className="z-20 origin-bottom right-0 bottom-0 md:-bottom-1 drop-shadow-lg"
+                    className="z-20 origin-bottom right-0 bottom-0 md:-bottom-1"
                   >
                     <svg width="70" height="90" viewBox="0 0 70 90" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <rect x="33" y="5" width="4" height="25" rx="2" fill="#D97706"/>
@@ -329,7 +329,7 @@ export const HomePage: React.FC = () => {
                   <motion.div 
                     animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 0.8], rotate: [0, 90, 180] }} 
                     transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }} 
-                    className="absolute top-6 right-2 text-[#FBBF24] z-30 drop-shadow-sm"
+                    className="absolute top-6 right-2 text-[#FBBF24] z-30"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
@@ -340,7 +340,7 @@ export const HomePage: React.FC = () => {
                   <motion.div 
                     animate={{ opacity: [0, 1, 0], scale: [0.6, 1, 0.6], rotate: [180, 90, 0] }} 
                     transition={{ repeat: Infinity, duration: 2, ease: "easeInOut", delay: 1 }} 
-                    className="absolute top-2 right-12 text-[#FCD34D] z-30 drop-shadow-sm"
+                    className="absolute top-2 right-12 text-[#FCD34D] z-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
@@ -360,7 +360,7 @@ export const HomePage: React.FC = () => {
                 hidden: { opacity: 0 },
                 show: { opacity: 1, transition: { staggerChildren: 0.06 } }
               }}
-              className="flex overflow-x-auto gap-2 px-4 mb-6 hide-scrollbar pb-1 sticky top-14 md:top-[calc(env(safe-area-inset-top)+3.5rem)] z-30 bg-gray-50/90 dark:bg-black/90 backdrop-blur-sm pt-2"
+              className="flex overflow-x-auto gap-2 px-4 mb-6 hide-scrollbar pb-1 sticky top-14 md:top-[calc(env(safe-area-inset-top)+3.5rem)] z-30 bg-gray-50/95 dark:bg-black/95 pt-2"
             >
               {CATEGORIES.map(category => (
                 <motion.button
@@ -447,7 +447,7 @@ export const HomePage: React.FC = () => {
                           {/* Out of stock badge */}
                           {product.stock === 0 && (
                             <div className="absolute inset-0 bg-white/40 dark:bg-black/60 flex items-center justify-center z-10">
-                              <span className="bg-gray-900/90 text-white px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wider backdrop-blur-sm">
+                              <span className="bg-gray-900/95 text-white px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wider">
                                 {i18n.language === 'en' ? 'OUT OF STOCK' : 'สินค้าหมด'}
                               </span>
                             </div>

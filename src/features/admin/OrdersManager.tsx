@@ -13,8 +13,8 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, subtitle, confirmTex
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: "spring", duration: 0.4, bounce: 0.2 }} className="bg-[#f9fafb] dark:bg-gray-800 rounded-3xl w-full max-w-[320px] relative z-10 shadow-2xl flex flex-col p-6 border border-gray-100 dark:border-gray-700/50">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="absolute inset-0 bg-black/60" onClick={onClose} />
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: "spring", duration: 0.4, bounce: 0.2 }} className="bg-[#f9fafb] dark:bg-gray-800 rounded-3xl w-full max-w-[320px] relative z-10 shadow-lg flex flex-col p-6 border border-gray-100 dark:border-gray-700/50">
             <div className="flex flex-col items-center text-center">
               {isDestructive ? (
                 <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">

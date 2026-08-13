@@ -91,7 +91,7 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto min-h-screen bg-gray-50/50 dark:bg-gray-900 pb-[env(safe-area-inset-bottom)] overflow-hidden relative">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/70 dark:bg-black/70 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50">
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-black/95 border-b border-gray-200/50 dark:border-gray-800/50">
         <div className="flex justify-between items-center h-16 px-4 md:px-8">
           <div className="flex items-center text-xl md:text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white select-none">
             <span className="mr-0.5">tap</span>
@@ -193,7 +193,7 @@ export const AdminDashboard: React.FC = () => {
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
               exit={{ opacity: 0 }} 
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60"
               onClick={() => setIsAnalyticsOpen(false)}
             />
             <motion.div 
@@ -201,7 +201,7 @@ export const AdminDashboard: React.FC = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }} 
               exit={{ opacity: 0, y: '100%', scale: 0.95 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="bg-gray-50 dark:bg-gray-900 w-full md:max-w-4xl h-[90vh] md:h-[85vh] rounded-t-3xl md:rounded-3xl shadow-2xl relative z-10 overflow-hidden flex flex-col"
+              className="bg-gray-50 dark:bg-gray-900 w-full md:max-w-4xl h-[90vh] md:h-[85vh] rounded-t-3xl md:rounded-3xl shadow-lg relative z-10 overflow-hidden flex flex-col"
             >
               <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 z-20">
                 <h2 className="text-xl font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
