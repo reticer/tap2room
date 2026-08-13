@@ -302,27 +302,31 @@ export const HomePage: React.FC = () => {
                   <motion.div
                     animate={{ rotate: [-2, 2, -2], y: [0, -2, 0] }}
                     transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
-                    className="z-10 absolute right-10 bottom-0 md:-bottom-2"
+                    className="z-10 absolute right-10 bottom-0 md:-bottom-2 will-change-transform"
                   >
-                    <svg width="80" height="90" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M25 30 C25 5 55 5 55 30" stroke="#F5A97F" strokeWidth="6" strokeLinecap="round"/>
-                      <rect x="10" y="30" width="60" height="55" rx="8" fill="#FDBA74"/>
-                      <rect x="25" y="55" width="30" height="12" rx="6" fill="#F5A97F"/>
-                    </svg>
+                    <div className="drop-shadow-xl dark:drop-shadow-[0_10px_15px_rgba(255,255,255,0.07)]">
+                      <svg width="80" height="90" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M25 30 C25 5 55 5 55 30" stroke="#F5A97F" strokeWidth="6" strokeLinecap="round"/>
+                        <rect x="10" y="30" width="60" height="55" rx="8" fill="#FDBA74"/>
+                        <rect x="25" y="55" width="30" height="12" rx="6" fill="#F5A97F"/>
+                      </svg>
+                    </div>
                   </motion.div>
 
                   {/* Cup SVG (Yellow/Peach) */}
                   <motion.div
                     animate={{ rotate: [2, -2, 2], y: [0, -3, 0] }}
                     transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", delay: 0.5 }}
-                    className="z-20 origin-bottom right-0 bottom-0 md:-bottom-1"
+                    className="z-20 origin-bottom right-0 bottom-0 md:-bottom-1 will-change-transform"
                   >
-                    <svg width="70" height="90" viewBox="0 0 70 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="33" y="5" width="4" height="25" rx="2" fill="#D97706"/>
-                      <path d="M10 30 L60 30 L50 20 L20 20 Z" fill="#FDE047"/>
-                      <path d="M15 30 L55 30 L45 80 L25 80 Z" fill="#FCD34D"/>
-                      <path d="M18 45 L52 45 L49 60 L21 60 Z" fill="#FBBF24"/>
-                    </svg>
+                    <div className="drop-shadow-xl dark:drop-shadow-[0_10px_15px_rgba(255,255,255,0.07)]">
+                      <svg width="70" height="90" viewBox="0 0 70 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="33" y="5" width="4" height="25" rx="2" fill="#D97706"/>
+                        <path d="M10 30 L60 30 L50 20 L20 20 Z" fill="#FDE047"/>
+                        <path d="M15 30 L55 30 L45 80 L25 80 Z" fill="#FCD34D"/>
+                        <path d="M18 45 L52 45 L49 60 L21 60 Z" fill="#FBBF24"/>
+                      </svg>
+                    </div>
                   </motion.div>
 
                   {/* Sparkle 1 */}
