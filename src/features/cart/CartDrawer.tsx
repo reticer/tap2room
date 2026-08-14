@@ -95,7 +95,7 @@ export const CartDrawer: React.FC = () => {
         
       setIsSubmitting(false);
       if (hasUsed) {
-        setCouponError(isEn ? 'This room has already used this coupon code.' : 'ห้องนี้เคยใช้โค้ดส่วนลดนี้ไปแล้ว');
+        setCouponError(isEn ? 'This discount code cannot be used.' : 'โค้ดส่วนลดไม่สามารถใช้งานได้');
         setAppliedCoupon(null);
         setIsCouponExpanded(true);
         return;
@@ -135,7 +135,7 @@ export const CartDrawer: React.FC = () => {
         });
           
         if (hasUsed) {
-          setCouponError(isEn ? 'This room has already used this coupon code.' : 'ห้องนี้เคยใช้โค้ดส่วนลดนี้ไปแล้ว');
+          setCouponError(isEn ? 'This discount code cannot be used.' : 'โค้ดส่วนลดไม่สามารถใช้งานได้');
           setAppliedCoupon(null);
           setIsCouponExpanded(true);
           setCartOpen(true);
@@ -456,18 +456,20 @@ export const CartDrawer: React.FC = () => {
               </div>
 
               {/* Promo Code Section */}
-              <motion.div layout className="flex flex-col gap-1 mt-1 border-t border-gray-100 dark:border-gray-800 pt-3">
-                <div className="flex justify-between items-center cursor-pointer" onClick={() => !appliedCoupon && setIsCouponExpanded(!isCouponExpanded)}>
-                  <label className="text-[13px] font-semibold text-gray-700 dark:text-gray-300 pointer-events-none">{isEn ? 'Promo Code' : 'โค้ดส่วนลด'}</label>
-                  {!appliedCoupon && !isCouponExpanded && (
+              <motion.div layout className="flex flex-col mt-0">
+                {!appliedCoupon && (
+                  <div className="flex justify-end items-center cursor-pointer" onClick={() => {
+                    if (isCouponExpanded) setCouponCode('');
+                    setIsCouponExpanded(!isCouponExpanded);
+                  }}>
                     <button 
                       type="button"
                       className="text-ios-primary text-xs font-bold bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg"
                     >
-                      {isEn ? '+ Add Code' : '+ ใส่โค้ดส่วนลด'}
+                      {isCouponExpanded ? (isEn ? 'Cancel' : 'ยกเลิก') : (isEn ? '+ Add Code' : '+ ใส่โค้ดส่วนลด')}
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
                 
                 <AnimatePresence>
                   {appliedCoupon ? (
@@ -515,7 +517,7 @@ export const CartDrawer: React.FC = () => {
                 </AnimatePresence>
               </motion.div>
               
-              <div className="flex flex-col gap-1 mt-2 border-t border-gray-100 dark:border-gray-800 pt-3">
+              <div className="flex flex-col gap-1 mt-0 border-t border-gray-100 dark:border-gray-800 pt-2">
                 {appliedCoupon && (
                   <div className="flex justify-between items-center text-sm font-bold text-green-600 dark:text-green-400">
                     <span>{isEn ? 'Discount' : 'ส่วนลด'} ({appliedCoupon.code})</span>

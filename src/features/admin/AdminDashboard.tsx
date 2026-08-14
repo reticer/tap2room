@@ -8,7 +8,7 @@ import { ProductsManager } from './ProductsManager';
 import { SettingsManager } from './SettingsManager';
 import { AnalyticsManager } from './AnalyticsManager';
 import { AnimatePresence, motion } from 'framer-motion';
-import { BarChart3, X } from 'lucide-react';
+import { BarChart3, X, Clock } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -19,7 +19,7 @@ export const AdminDashboard: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   
   // Store Status
-  const [storeStatus, setStoreStatus] = useState<'open' | 'closed'>('open');
+  const [storeStatus, setStoreStatus] = useState<'open' | 'closed' | 'break'>('open');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export const AdminDashboard: React.FC = () => {
         .eq('id', 'store_status')
         .single();
         
-      if (data) setStoreStatus(data.value as 'open' | 'closed');
+      if (data) setStoreStatus(data.value as 'open' | 'closed' | 'break');
     };
 
     fetchSettings();
@@ -62,10 +62,9 @@ export const AdminDashboard: React.FC = () => {
     };
   }, [session]);
 
-  const toggleStoreStatus = async () => {
-    if (isUpdatingStatus) return;
+  const updateStoreStatus = async (newStatus: 'open' | 'closed' | 'break') => {
+    if (isUpdatingStatus || storeStatus === newStatus) return;
     setIsUpdatingStatus(true);
-    const newStatus = storeStatus === 'open' ? 'closed' : 'open';
     
     // Optimistic UI update
     setStoreStatus(newStatus);
@@ -75,7 +74,7 @@ export const AdminDashboard: React.FC = () => {
       .upsert({ 
         id: 'store_status', 
         value: newStatus,
-        description: 'Store operating status (open/closed)'
+        description: 'Store operating status (open/closed/break)'
       });
       
     if (error) {
@@ -119,47 +118,83 @@ export const AdminDashboard: React.FC = () => {
       {/* Summary Cards */}
       <div className="p-4 md:px-8 max-w-7xl mx-auto pt-6">
         <div className="grid grid-cols-2 gap-4">
-          <button 
-            onClick={toggleStoreStatus}
-            disabled={isUpdatingStatus}
-            className={`bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border flex flex-col justify-between relative overflow-hidden transition-all duration-200 cursor-pointer ${
+          <div 
+            className={`bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border flex flex-col justify-between relative overflow-hidden transition-all duration-200 ${
               storeStatus === 'open' 
                 ? 'border-green-100 dark:border-green-900/50 hover:shadow-md' 
+                : storeStatus === 'break'
+                ? 'border-amber-100 dark:border-amber-900/50 hover:shadow-md'
                 : 'border-red-100 dark:border-red-900/50 hover:shadow-md'
-            } ${isUpdatingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${isUpdatingStatus ? 'opacity-50 pointer-events-none' : ''}`}
           >
-            <div className="flex justify-between items-start mb-3 relative z-10 w-full">
+            <div className="flex justify-between items-start mb-2 relative z-10 w-full">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition-colors ${
                   storeStatus === 'open' 
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' 
+                    : storeStatus === 'break'
+                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
                     : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                 }`}>
-                  {storeStatus === 'open' ? <ShoppingBag className="w-5 h-5" /> : <X className="w-5 h-5" />}
+                  {storeStatus === 'open' ? <ShoppingBag className="w-5 h-5" /> : storeStatus === 'break' ? <Clock className="w-5 h-5" /> : <X className="w-5 h-5" />}
                 </div>
                 <div className="flex flex-col text-left">
-                  <span className="font-semibold text-gray-600 dark:text-gray-300 text-sm leading-tight">
-                    {isEn ? 'Store Status' : 'สถานะร้าน'}
+                  <span className={`font-extrabold text-[15px] leading-tight ${
+                    storeStatus === 'open' 
+                      ? 'text-green-600 dark:text-green-400' 
+                      : storeStatus === 'break'
+                      ? 'text-amber-500 dark:text-amber-400'
+                      : 'text-red-500 dark:text-red-400'
+                  }`}>
+                    {storeStatus === 'open' ? (isEn ? 'OPEN' : 'เปิดร้าน') : storeStatus === 'break' ? (isEn ? 'BREAK' : 'พักเบรก') : (isEn ? 'CLOSED' : 'ปิดร้าน')}
                   </span>
-                  <span className="text-[11px] text-gray-400 dark:text-gray-500 font-medium mt-0.5">
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium mt-0.5">
                     {storeStatus === 'open' 
-                      ? (isEn ? '(Tap to close)' : '(แตะเพื่อปิด)') 
-                      : (isEn ? '(Tap to open)' : '(แตะเพื่อเปิด)')}
+                      ? (isEn ? 'Accepting orders' : 'รับออร์เดอร์ปกติ') 
+                      : storeStatus === 'break'
+                      ? (isEn ? 'Temporarily paused' : 'พักชั่วคราว')
+                      : (isEn ? 'Not accepting orders' : 'ปิดรับออร์เดอร์')}
                   </span>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center justify-between relative z-10 mt-2 w-full">
-              <span className={`text-xl md:text-2xl font-extrabold ${
-                storeStatus === 'open' 
-                  ? 'text-green-600 dark:text-green-400' 
-                  : 'text-red-500 dark:text-red-400'
-              }`}>
-                {storeStatus === 'open' ? (isEn ? 'OPEN' : 'เปิดร้าน') : (isEn ? 'CLOSED' : 'ปิดร้านชั่วคราว')}
-              </span>
+            {/* Premium Sliding Segmented Control */}
+            <div className="relative w-full bg-gray-100 dark:bg-gray-900 p-1 rounded-xl flex items-center mt-auto z-0">
+              {/* Sliding indicator track */}
+              <div className="absolute inset-1 pointer-events-none">
+                <div 
+                  className="h-full w-1/3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-black/5 transition-transform duration-300 ease-out"
+                  style={{ 
+                    transform: `translateX(${
+                      storeStatus === 'open' ? '0%' : 
+                      storeStatus === 'break' ? '100%' : 
+                      '200%'
+                    })`
+                  }}
+                />
+              </div>
+              
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateStoreStatus('open'); }}
+                className={`relative z-10 flex-1 flex justify-center py-1.5 transition-colors duration-200 ${storeStatus === 'open' ? 'text-green-600 dark:text-green-500' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              >
+                <span className="font-bold text-[13px]">{isEn ? 'Open' : 'เปิด'}</span>
+              </button>
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateStoreStatus('break'); }}
+                className={`relative z-10 flex-1 flex justify-center py-1.5 transition-colors duration-200 ${storeStatus === 'break' ? 'text-amber-600 dark:text-amber-500' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              >
+                <span className="font-bold text-[13px]">{isEn ? 'Break' : 'พัก'}</span>
+              </button>
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateStoreStatus('closed'); }}
+                className={`relative z-10 flex-1 flex justify-center py-1.5 transition-colors duration-200 ${storeStatus === 'closed' ? 'text-red-600 dark:text-red-500' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              >
+                <span className="font-bold text-[13px]">{isEn ? 'Close' : 'ปิด'}</span>
+              </button>
             </div>
-          </button>
+          </div>
           <button 
             onClick={() => setIsAnalyticsOpen(true)}
             className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700/50 flex flex-col justify-between text-left hover:border-orange-500/50 transition-colors cursor-pointer group relative overflow-hidden"

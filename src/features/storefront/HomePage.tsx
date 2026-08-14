@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabaseClient';
 import { useCartStore } from '../../store/useCartStore';
 import type { Product } from '../../store/useCartStore';
-import { Plus, Minus, ShoppingBag, PackageOpen, Headphones, ClipboardList } from 'lucide-react';
+import { Plus, Minus, ShoppingBag, PackageOpen, Headphones, ClipboardList, Coffee } from 'lucide-react';
 import { CartDrawer } from '../cart/CartDrawer';
 import { AdminAuthModal } from '../admin/AdminAuthModal';
 import { ProductDetailsModal } from './ProductDetailsModal';
@@ -39,7 +39,7 @@ export const HomePage: React.FC = () => {
   const [isFeedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [isMyOrdersModalOpen, setMyOrdersModalOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
-  const [storeStatus, setStoreStatus] = useState<'open' | 'closed'>('open');
+  const [storeStatus, setStoreStatus] = useState<'open' | 'closed' | 'break'>('open');
 
   useEffect(() => {
     // Initial delay before showing
@@ -87,7 +87,7 @@ export const HomePage: React.FC = () => {
     // Fetch initial store status
     const fetchStoreStatus = async () => {
       const { data } = await supabase.from('app_settings').select('value').eq('id', 'store_status').single();
-      if (data) setStoreStatus(data.value as 'open' | 'closed');
+      if (data) setStoreStatus(data.value as 'open' | 'closed' | 'break');
     };
     fetchStoreStatus();
 
@@ -96,7 +96,7 @@ export const HomePage: React.FC = () => {
       .channel('public:settings:changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings', filter: 'id=eq.store_status' }, (payload: any) => {
         if (payload.new && payload.new.value) {
-          setStoreStatus(payload.new.value as 'open' | 'closed');
+          setStoreStatus(payload.new.value as 'open' | 'closed' | 'break');
         }
       })
       .subscribe();
@@ -188,7 +188,35 @@ export const HomePage: React.FC = () => {
               <PackageOpen className="w-6 h-6" />
             </div>
             <h3 className="text-white font-extrabold text-lg">{i18n.language === 'en' ? 'Temporarily Closed' : 'ขณะนี้ปิดรับออร์เดอร์ชั่วคราว'}</h3>
-            <p className="text-gray-300 text-sm mt-1">{i18n.language === 'en' ? 'We are not accepting orders at the moment. Please come back later.' : 'ขออภัยครับ ขณะนี้เรายังไม่เปิดรับออร์เดอร์ กรุณากลับมาใหม่ภายหลัง'}</p>
+            <p className="text-gray-300 text-sm mt-1 leading-snug">
+              {i18n.language === 'en' ? (
+                <>We are not accepting orders at the moment.<br/>Please come back later.</>
+              ) : (
+                <>ขออภัยครับ ขณะนี้เรายังไม่เปิดรับออเดอร์<br/>กรุณากลับมาใหม่ในภายหลัง</>
+              )}
+            </p>
+          </motion.div>
+        )}
+        {storeStatus === 'break' && (
+          <motion.div 
+            initial={{ opacity: 0, y: -50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.95 }}
+            className="fixed top-20 md:top-[calc(env(safe-area-inset-top)+4.5rem)] left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md bg-white/85 dark:bg-gray-900/85 backdrop-blur-xl border border-white/60 dark:border-gray-700/50 rounded-2xl p-4 shadow-2xl shadow-orange-500/10 flex items-center gap-3 mt-4"
+          >
+            <div className="w-11 h-11 shrink-0 bg-gradient-to-br from-amber-50 to-orange-100 text-orange-500 rounded-full flex items-center justify-center shadow-sm border border-orange-200/50">
+              <Coffee className="w-5 h-5" />
+            </div>
+            <div className="text-left flex-1 pt-0.5">
+              <h3 className="text-gray-900 dark:text-white font-extrabold text-[15px]">{i18n.language === 'en' ? 'Staff on Break' : 'ขณะนี้พนักงานไปพัก'}</h3>
+              <p className="text-gray-600 dark:text-gray-300 text-[13px] mt-0.5 leading-snug">
+                {i18n.language === 'en' ? (
+                  <>Deliveries may be delayed, but you can still<br/>place orders as usual.</>
+                ) : (
+                  <>ขณะนี้อาจมีความล่าช้าในการจัดส่งสินค้า<br/>แต่คุณลูกค้าสามารถสั่งซื้อได้ตามปกติครับผม</>
+                )}
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -250,7 +278,10 @@ export const HomePage: React.FC = () => {
         </div>
       </header>
 
-      <div className={`transition-all duration-700 ease-in-out min-h-screen ${storeStatus === 'closed' ? 'grayscale-[0.9] opacity-70' : ''}`}>
+      <div className={`transition-all duration-700 ease-in-out min-h-screen ${
+        storeStatus === 'closed' ? 'grayscale-[0.9] opacity-70' : 
+        storeStatus === 'break' ? 'grayscale-[0.4] opacity-90' : ''
+      }`}>
         
         {/* Main Content padding-top to account for fixed header + safe area */}
         <main className="pt-14 md:pt-[calc(env(safe-area-inset-top)+3.5rem)]">
@@ -530,7 +561,7 @@ export const HomePage: React.FC = () => {
       </div>
 
       {/* 6. Floating Action Buttons (Mobile Only) */}
-      {storeStatus === 'open' && (
+      {storeStatus !== 'closed' && (
       <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-50 mb-[env(safe-area-inset-bottom)] pointer-events-none flex items-end justify-between">
         
         {/* Left: Feedback Button */}

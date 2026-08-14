@@ -49,10 +49,10 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('product_details')} bgClass="bg-[#FFFCF9] dark:bg-gray-900">
       <div className="flex flex-col gap-4">
-        <div className="relative px-6">
-          <div className="w-full aspect-square bg-white dark:bg-gray-800 relative overflow-hidden rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-orange-100/50 dark:border-gray-700">
+        <div className="relative px-6 flex justify-center">
+          <div className="w-48 h-48 md:w-56 md:h-56 bg-white dark:bg-gray-800 relative overflow-hidden rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-orange-100/50 dark:border-gray-700 shrink-0">
             {product.image_url ? (
-              <img src={getOptimizedImageUrl(product.image_url, 600, 85)} alt={product.name_th} className={`absolute inset-0 w-full h-full object-contain ${product.stock === 0 ? 'grayscale opacity-60' : ''}`} />
+              <img src={getOptimizedImageUrl(product.image_url, 400, 85)} alt={product.name_th} className={`absolute inset-0 w-full h-full object-contain p-2 ${product.stock === 0 ? 'grayscale opacity-60' : ''}`} />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-gray-400">
                 {t('no_image')}
@@ -62,7 +62,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
             {/* Out of stock badge */}
             {product.stock === 0 && (
               <div className="absolute inset-0 bg-white/40 dark:bg-black/60 flex items-center justify-center z-10">
-                <span className="bg-gray-900/95 text-white px-5 py-2 rounded-full text-[13px] font-bold tracking-wider">
+                <span className="bg-gray-900/95 text-white px-4 py-1.5 rounded-full text-xs font-bold tracking-wider">
                   {i18n.language === 'en' ? 'OUT OF STOCK' : 'สินค้าหมด'}
                 </span>
               </div>
