@@ -359,7 +359,7 @@ export const SettingsManager: React.FC = () => {
       </Card>
       
       <div className="text-center mt-6 text-gray-400 dark:text-gray-500 text-sm font-medium">
-        tap2room V2.0
+        tap2room v2.1.0
       </div>
 
       {/* Activity Log Modal */}

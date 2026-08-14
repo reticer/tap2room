@@ -189,11 +189,11 @@ export const HomePage: React.FC = () => {
             </div>
             <h3 className="text-white font-extrabold text-lg">{i18n.language === 'en' ? 'Temporarily Closed' : 'ขณะนี้ปิดรับออร์เดอร์ชั่วคราว'}</h3>
             <p className="text-gray-300 text-sm mt-1 leading-snug">
-              {i18n.language === 'en' ? (
-                <>We are not accepting orders at the moment.<br/>Please come back later.</>
-              ) : (
-                <>ขออภัยครับ ขณะนี้เรายังไม่เปิดรับออเดอร์<br/>กรุณากลับมาใหม่ในภายหลัง</>
-              )}
+                {i18n.language === 'en' ? (
+                  <>Sorry, we are currently not accepting orders.<br/>Please check back later.</>
+                ) : (
+                  <>ทางร้านขออภัยที่ยังไม่สามารถรับออเดอร์ได้ในตอนนี้<br/>รบกวนแวะมาใช้บริการใหม่ภายหลังนะครับ</>
+                )}
             </p>
           </motion.div>
         )}
@@ -202,7 +202,7 @@ export const HomePage: React.FC = () => {
             initial={{ opacity: 0, y: -50, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -50, scale: 0.95 }}
-            className="fixed top-20 md:top-[calc(env(safe-area-inset-top)+4.5rem)] left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md bg-white/85 dark:bg-gray-900/85 backdrop-blur-xl border border-white/60 dark:border-gray-700/50 rounded-2xl p-4 shadow-2xl shadow-orange-500/10 flex items-center gap-3 mt-4"
+            className="fixed top-20 md:top-[calc(env(safe-area-inset-top)+4.5rem)] left-0 right-0 mx-auto z-50 w-[85%] max-w-sm bg-white/85 dark:bg-gray-900/85 backdrop-blur-xl border border-white/60 dark:border-gray-700/50 rounded-2xl p-4 shadow-2xl shadow-orange-500/10 flex items-center gap-3 mt-4"
           >
             <div className="w-11 h-11 shrink-0 bg-gradient-to-br from-amber-50 to-orange-100 text-orange-500 rounded-full flex items-center justify-center shadow-sm border border-orange-200/50">
               <Coffee className="w-5 h-5" />
