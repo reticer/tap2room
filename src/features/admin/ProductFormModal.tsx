@@ -51,6 +51,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [error, setError] = useState('');
 
   // Populate data if editing
@@ -74,6 +75,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
       setImageSrc(null);
       setCroppedImageFile(null);
       setCroppedImageUrl(null);
+      setIsCropping(false);
+      setIsDeleteConfirmOpen(false);
       setError('');
     }
   }, [product, isOpen]);
@@ -196,10 +199,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
     }
   };
 
-  const handleDelete = async () => {
-    if (!product?.id) return;
-    const confirmMsg = isEn ? "Are you sure you want to delete this product?" : "คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?";
-    if (!window.confirm(confirmMsg)) return;
+  const confirmDelete = async () => {
+    if (!product?.id || isDeleting) return;
     
     setIsDeleting(true);
     try {
@@ -210,46 +211,26 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
         
       if (deleteError) throw deleteError;
       
+      setIsDeleteConfirmOpen(false);
       onSuccess();
       onClose();
     } catch (err: any) {
       console.error(err);
+      setIsDeleteConfirmOpen(false);
       setError(err.message || 'Error deleting product');
     } finally {
       setIsDeleting(false);
     }
   };
 
-  if (isCropping && imageSrc) {
-    return (
-      <Modal isOpen={isOpen} onClose={cancelCrop} title="Crop Image (Square)">
-        <div className="flex flex-col gap-4">
-          <div className="relative w-full h-80 bg-black rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
-            <Cropper
-              image={imageSrc}
-              crop={crop}
-              zoom={zoom}
-              aspect={1}
-              onCropChange={setCrop}
-              onCropComplete={onCropComplete}
-              onZoomChange={setZoom}
-            />
-          </div>
-          <div className="flex justify-between gap-3">
-            <Button variant="secondary" onClick={cancelCrop} className="flex-1">
-              <X className="w-5 h-5 mr-1" /> Cancel
-            </Button>
-            <Button onClick={showCroppedImage} className="flex-1">
-              <Check className="w-5 h-5 mr-1" /> Confirm Crop
-            </Button>
-          </div>
-        </div>
-      </Modal>
-    );
-  }
-
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={product ? "Edit Product" : "Add New Product"}>
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        disableClose={isSubmitting || isDeleting}
+        title={product ? "Edit Product" : "Add New Product"}
+      >
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         
         <div 
@@ -317,7 +298,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
               type="button" 
               variant="danger" 
               fullWidth 
-              onClick={handleDelete}
+              onClick={() => setIsDeleteConfirmOpen(true)}
               isLoading={isDeleting}
               disabled={isSubmitting}
             >
@@ -327,5 +308,70 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onCl
         </div>
       </form>
     </Modal>
+
+    <Modal
+      isOpen={isOpen && isCropping && !!imageSrc}
+      onClose={cancelCrop}
+      title="Crop Image (Square)"
+    >
+      {imageSrc && (
+        <div className="flex flex-col gap-4">
+          <div className="relative w-full h-80 bg-black rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              onCropChange={setCrop}
+              onCropComplete={onCropComplete}
+              onZoomChange={setZoom}
+            />
+          </div>
+          <div className="flex justify-between gap-3">
+            <Button type="button" variant="secondary" onClick={cancelCrop} className="flex-1">
+              <X className="w-5 h-5 mr-1" /> Cancel
+            </Button>
+            <Button type="button" onClick={showCroppedImage} className="flex-1">
+              <Check className="w-5 h-5 mr-1" /> Confirm Crop
+            </Button>
+          </div>
+        </div>
+      )}
+    </Modal>
+
+    <Modal
+      isOpen={isOpen && isDeleteConfirmOpen}
+      onClose={() => setIsDeleteConfirmOpen(false)}
+      disableClose={isDeleting}
+      size="xs"
+      title={isEn ? 'Delete Product' : 'ยืนยันการลบสินค้า'}
+    >
+      <div className="flex flex-col gap-5 pt-1">
+        <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">
+          {isEn ? "Are you sure you want to delete this product?" : "คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?"}
+        </p>
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="secondary"
+            className="flex-1"
+            onClick={() => setIsDeleteConfirmOpen(false)}
+            disabled={isDeleting}
+          >
+            {isEn ? "Cancel" : "ยกเลิก"}
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            className="flex-1"
+            onClick={confirmDelete}
+            isLoading={isDeleting}
+          >
+            {isEn ? "Delete" : "ลบทิ้ง"}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  </>
   );
 };

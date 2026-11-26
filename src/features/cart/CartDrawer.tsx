@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCartStore } from '../../store/useCartStore';
-import { BottomSheet } from '../../components/ui/BottomSheet';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { Minus, Plus, Trash2, ShoppingCart, X } from 'lucide-react';
@@ -177,7 +176,7 @@ export const CartDrawer: React.FC = () => {
         let activeOrders: string[] = [];
         try {
           if (stored) activeOrders = JSON.parse(stored);
-        } catch(e) {}
+        } catch {}
         
         // Add new tracking code if not exists
         if (!activeOrders.includes(trackingCode)) {
@@ -318,11 +317,14 @@ export const CartDrawer: React.FC = () => {
 
   return (
     <>
-      <BottomSheet
+      <Modal
         isOpen={isCartOpen}
         onClose={() => setCartOpen(false)}
         title={t('cart')}
-        bgClass="bg-[#FFFDF9] dark:bg-gray-900"
+        size="md"
+        disableClose={isSubmitting}
+        panelClassName={items.length > 0 ? 'h-[85vh]' : ''}
+        bodyClassName="flex-1 min-h-0 overflow-hidden flex flex-col p-0"
       >
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-gray-400">
@@ -391,10 +393,10 @@ export const CartDrawer: React.FC = () => {
             </div>
 
             {/* Fade effect for scroll */}
-            <div className="w-full h-10 bg-gradient-to-t from-[#FFFDF9] dark:from-gray-900 to-transparent pointer-events-none -mt-10 z-10 relative" />
+            <div className="w-full h-10 bg-gradient-to-t from-white/80 dark:from-gray-900/80 to-transparent pointer-events-none -mt-10 z-10 relative" />
 
             {/* Pinned checkout section - always visible at bottom */}
-            <motion.div layout className="relative z-20 flex-shrink-0 border-t border-orange-100/50 dark:border-gray-800 px-6 pt-3 pb-5 bg-[#FFFDF9] dark:bg-gray-900 flex flex-col gap-3">
+            <motion.div layout className="relative z-20 flex-shrink-0 border-t border-orange-100/50 dark:border-gray-800 px-6 pt-3 pb-5 bg-white/70 dark:bg-gray-900/70 flex flex-col gap-3">
               <motion.div layout className="flex gap-3 items-end">
                 <div className="w-[35%] flex flex-col gap-1">
                   <label className="text-[13px] font-semibold text-gray-700 dark:text-gray-300 truncate">{t('room_number')}</label>
@@ -542,12 +544,13 @@ export const CartDrawer: React.FC = () => {
             </motion.div>
           </div>
         )}
-      </BottomSheet>
+      </Modal>
 
       <Modal
         isOpen={isCheckoutModalOpen}
         onClose={() => !orderSuccess && !isSubmitting && setCheckoutModalOpen(false)}
         title={t('pay_now')}
+        disableClose={orderSuccess || isSubmitting}
       >
         {orderSuccess ? (
           <motion.div 
@@ -610,6 +613,7 @@ export const CartDrawer: React.FC = () => {
         isOpen={isCodModalOpen}
         onClose={() => !orderSuccess && !isSubmitting && setCodModalOpen(false)}
         title={t('cash_on_delivery')}
+        disableClose={orderSuccess || isSubmitting}
       >
         {orderSuccess ? (
           <motion.div 

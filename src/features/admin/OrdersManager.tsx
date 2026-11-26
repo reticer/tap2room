@@ -1,65 +1,91 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { Button } from '../../components/ui/Button';
+import { Modal } from '../../components/ui/Modal';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, ListChecks, CheckSquare, Square, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createPortal } from 'react-dom';
 import { useInfiniteQuery, useQueryClient, useQuery } from '@tanstack/react-query';
 
-const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, subtitle, confirmText, cancelText, isDestructive }: any) => {
-  if (typeof window === 'undefined') return null;
-  return createPortal(
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="absolute inset-0 bg-black/60" onClick={onClose} />
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: "spring", duration: 0.4, bounce: 0.2 }} className="bg-[#f9fafb] dark:bg-gray-800 rounded-3xl w-full max-w-[320px] relative z-10 shadow-lg flex flex-col p-6 border border-gray-100 dark:border-gray-700/50">
-            <div className="flex flex-col items-center text-center">
-              {isDestructive ? (
-                <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
-                  <AlertTriangle className="w-8 h-8 text-red-500" />
-                </div>
-              ) : (
-                <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mb-4">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                </div>
-              )}
-              
-              <h3 className="font-semibold text-[1.15rem] text-gray-900 dark:text-white leading-snug mb-2">
-                {title}
-              </h3>
-              
-              {subtitle && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">
-                  {subtitle}
-                </p>
-              )}
-            </div>
+interface ConfirmDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => Promise<void> | void;
+  title: string;
+  subtitle?: string;
+  confirmText: string;
+  cancelText: string;
+  isDestructive?: boolean;
+  isLoading?: boolean;
+}
 
-            <div className="flex gap-3 w-full">
-              <button 
-                onClick={onClose} 
-                className="flex-1 py-3.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-2xl transition-colors"
-              >
-                {cancelText}
-              </button>
-              <button 
-                onClick={() => { onConfirm(); onClose(); }} 
-                className={`flex-1 py-3.5 text-white font-semibold rounded-2xl transition-colors shadow-sm ${
-                  isDestructive 
-                    ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20' 
-                    : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20'
-                }`}
-              >
-                {confirmText}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>,
-    document.body
+const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  subtitle,
+  confirmText,
+  cancelText,
+  isDestructive,
+  isLoading = false,
+}) => {
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      disableClose={isLoading}
+      showCloseButton={false}
+      size="xs"
+      bodyClassName="p-6"
+      ariaLabel={title}
+    >
+      <div className="flex flex-col items-center text-center">
+        {isDestructive ? (
+          <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+            <AlertTriangle className="w-8 h-8 text-red-500" />
+          </div>
+        ) : (
+          <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mb-4">
+            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+          </div>
+        )}
+
+        <h3 className="font-semibold text-[1.15rem] text-gray-900 dark:text-white leading-snug mb-2">
+          {title}
+        </h3>
+
+        {subtitle && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">
+            {subtitle}
+          </p>
+        )}
+      </div>
+
+      <div className="flex gap-3 w-full">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onClose}
+          disabled={isLoading}
+          className="flex-1 py-3.5 !rounded-2xl font-semibold"
+        >
+          {cancelText}
+        </Button>
+        <Button
+          type="button"
+          onClick={onConfirm}
+          isLoading={isLoading}
+          className={`flex-1 py-3.5 text-white font-semibold !rounded-2xl shadow-sm ${
+            isDestructive
+              ? '!bg-red-500 hover:!bg-red-600 shadow-red-500/20'
+              : '!bg-emerald-500 hover:!bg-emerald-600 shadow-emerald-500/20'
+          }`}
+        >
+          {confirmText}
+        </Button>
+      </div>
+    </Modal>
   );
 };
 
@@ -82,6 +108,8 @@ export const OrdersManager: React.FC = () => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   const [bulkConfirmState, setBulkConfirmState] = useState(false);
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+  const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
 
   // Status filter state (persisted in localStorage)
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'preparing' | 'completed' | 'cancelled'>(() => {
@@ -235,18 +263,34 @@ export const OrdersManager: React.FC = () => {
     }
   };
 
+  const handleConfirmOrderAction = async () => {
+    if (isUpdatingOrder) return;
+    setIsUpdatingOrder(true);
+    try {
+      await updateStatus(confirmState.orderId, confirmState.action, confirmState.roomNumber, confirmState.couponCode);
+      setConfirmState(prev => ({ ...prev, isOpen: false }));
+    } finally {
+      setIsUpdatingOrder(false);
+    }
+  };
+
   const deleteSelectedOrders = async () => {
-    if (selectedOrderIds.size === 0) return;
-    const ids = Array.from(selectedOrderIds);
-    const { error } = await supabase.from('orders').delete().in('id', ids);
-    if (!error) {
-      queryClient.invalidateQueries({ queryKey: ['orders_infinite'] });
-      queryClient.invalidateQueries({ queryKey: ['orders_statuses'] });
-      setIsSelectionMode(false);
-      setSelectedOrderIds(new Set());
-      setBulkConfirmState(false);
-    } else {
-      console.error(error);
+    if (selectedOrderIds.size === 0 || isDeletingBulk) return;
+    setIsDeletingBulk(true);
+    try {
+      const ids = Array.from(selectedOrderIds);
+      const { error } = await supabase.from('orders').delete().in('id', ids);
+      if (!error) {
+        queryClient.invalidateQueries({ queryKey: ['orders_infinite'] });
+        queryClient.invalidateQueries({ queryKey: ['orders_statuses'] });
+        setIsSelectionMode(false);
+        setSelectedOrderIds(new Set());
+        setBulkConfirmState(false);
+      } else {
+        console.error(error);
+      }
+    } finally {
+      setIsDeletingBulk(false);
     }
   };
 
@@ -580,6 +624,7 @@ export const OrdersManager: React.FC = () => {
         isOpen={bulkConfirmState}
         onClose={() => setBulkConfirmState(false)}
         onConfirm={deleteSelectedOrders}
+        isLoading={isDeletingBulk}
         title={isEn ? 'Delete Selected Orders?' : 'ลบออเดอร์ที่เลือก?'}
         subtitle={isEn ? `You are about to permanently delete ${selectedOrderIds.size} orders. This action cannot be undone.` : `คุณกำลังจะลบออเดอร์ถาวรจำนวน ${selectedOrderIds.size} รายการ ข้อมูลนี้จะไม่สามารถกู้คืนได้`}
         confirmText={isEn ? 'Delete All' : 'ลบทิ้งทั้งหมด'}
@@ -590,7 +635,8 @@ export const OrdersManager: React.FC = () => {
       <ConfirmDialog
         isOpen={confirmState.isOpen}
         onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
-        onConfirm={() => updateStatus(confirmState.orderId, confirmState.action, confirmState.roomNumber, confirmState.couponCode)}
+        onConfirm={handleConfirmOrderAction}
+        isLoading={isUpdatingOrder}
         title={
           confirmState.action === 'cancelled' ? t('confirm_cancel_order') : 
           confirmState.action === 'preparing' ? (isEn ? 'Prepare Order?' : 'จัดเตรียมสินค้า?') :

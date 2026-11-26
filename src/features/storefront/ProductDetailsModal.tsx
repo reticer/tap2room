@@ -20,39 +20,45 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
   const updateQuantity = useCartStore(state => state.updateQuantity);
   const removeItem = useCartStore(state => state.removeItem);
 
-  if (!product) return null;
+  const lastProductRef = React.useRef<Product | null>(null);
+  if (product) {
+    lastProductRef.current = product;
+  }
+  const displayProduct = product ?? lastProductRef.current;
 
-  const cartItem = cartItems.find(item => item.id === product.id);
+  const cartItem = displayProduct ? cartItems.find(item => item.id === displayProduct.id) : undefined;
   const quantityInCart = cartItem?.quantity || 0;
 
   const handleAdd = () => {
-    if (product.stock > 0) {
-      addItem(product);
+    if (displayProduct && displayProduct.stock > 0) {
+      addItem(displayProduct);
       onClose();
     }
   };
 
   const handleIncrement = () => {
-    if (product.stock > quantityInCart) {
-      updateQuantity(product.id, quantityInCart + 1);
+    if (displayProduct && displayProduct.stock > quantityInCart) {
+      updateQuantity(displayProduct.id, quantityInCart + 1);
     }
   };
 
   const handleDecrement = () => {
+    if (!displayProduct) return;
     if (quantityInCart > 1) {
-      updateQuantity(product.id, quantityInCart - 1);
+      updateQuantity(displayProduct.id, quantityInCart - 1);
     } else {
-      removeItem(product.id);
+      removeItem(displayProduct.id);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t('product_details')} bgClass="bg-[#FFFCF9] dark:bg-gray-900">
+    <Modal isOpen={isOpen && !!product} onClose={onClose} title={t('product_details')}>
+      {displayProduct && (
       <div className="flex flex-col gap-4">
         <div className="relative px-6 flex justify-center">
           <div className="w-48 h-48 md:w-56 md:h-56 bg-white dark:bg-gray-800 relative overflow-hidden rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-orange-100/50 dark:border-gray-700 shrink-0">
-            {product.image_url ? (
-              <img src={getOptimizedImageUrl(product.image_url, 400, 85)} alt={product.name_th} className={`absolute inset-0 w-full h-full object-contain p-2 ${product.stock === 0 ? 'grayscale opacity-60' : ''}`} />
+            {displayProduct.image_url ? (
+              <img src={getOptimizedImageUrl(displayProduct.image_url, 400, 85)} alt={displayProduct.name_th} className={`absolute inset-0 w-full h-full object-contain p-2 ${displayProduct.stock === 0 ? 'grayscale opacity-60' : ''}`} />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-gray-400">
                 {t('no_image')}
@@ -60,7 +66,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
             )}
             
             {/* Out of stock badge */}
-            {product.stock === 0 && (
+            {displayProduct.stock === 0 && (
               <div className="absolute inset-0 bg-white/40 dark:bg-black/60 flex items-center justify-center z-10">
                 <span className="bg-gray-900/95 text-white px-4 py-1.5 rounded-full text-xs font-bold tracking-wider">
                   {i18n.language === 'en' ? 'OUT OF STOCK' : 'สินค้าหมด'}
@@ -73,25 +79,25 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
         {/* Details */}
         <div className="flex flex-col gap-2">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white leading-relaxed pt-1">
-            {i18n.language === 'en' && product.name_en ? product.name_en : product.name_th}
+            {i18n.language === 'en' && displayProduct.name_en ? displayProduct.name_en : displayProduct.name_th}
           </h2>
           {/* Description support if available */}
-          {(product.description_en || product.description_th) && (
+          {(displayProduct.description_en || displayProduct.description_th) && (
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              {i18n.language === 'en' && product.description_en ? product.description_en : (product.description_th || t('product_desc_empty'))}
+              {i18n.language === 'en' && displayProduct.description_en ? displayProduct.description_en : (displayProduct.description_th || t('product_desc_empty'))}
             </p>
           )}
           <div className="flex items-center gap-3 mt-1 pt-1">
-            {product.sale_price ? (
+            {displayProduct.sale_price ? (
               <>
-                <span className="text-2xl font-bold text-ios-primary leading-normal">฿{product.sale_price.toLocaleString()}</span>
-                <span className="text-sm font-medium text-gray-400 line-through mt-1">฿{product.price.toLocaleString()}</span>
+                <span className="text-2xl font-bold text-ios-primary leading-normal">฿{displayProduct.sale_price.toLocaleString()}</span>
+                <span className="text-sm font-medium text-gray-400 line-through mt-1">฿{displayProduct.price.toLocaleString()}</span>
               </>
             ) : (
-              <span className="text-2xl font-bold text-ios-primary leading-normal">฿{product.price.toLocaleString()}</span>
+              <span className="text-2xl font-bold text-ios-primary leading-normal">฿{displayProduct.price.toLocaleString()}</span>
             )}
           </div>
-          <p className="text-sm text-gray-500 font-medium">{product.stock} {t('stock_left')}</p>
+          <p className="text-sm text-gray-500 font-medium">{displayProduct.stock} {t('stock_left')}</p>
         </div>
 
         {/* Actions */}
@@ -100,9 +106,9 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleAdd}
-              disabled={product.stock === 0}
+              disabled={displayProduct.stock === 0}
               className={`w-full py-4 rounded-full font-bold flex items-center justify-center gap-2 text-lg shadow-sm transition-all duration-200 ${
-                product.stock === 0
+                displayProduct.stock === 0
                   ? 'bg-gray-200 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed'
                   : 'bg-orange-500 text-white hover:bg-orange-600 active:bg-orange-700 shadow-md shadow-orange-500/20'
               }`}
@@ -123,9 +129,9 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
               <motion.button 
                 whileTap={{ scale: 0.9 }}
                 onClick={handleIncrement}
-                disabled={quantityInCart >= product.stock}
+                disabled={quantityInCart >= displayProduct.stock}
                 className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm ${
-                  quantityInCart >= product.stock
+                  quantityInCart >= displayProduct.stock
                     ? 'bg-gray-200 dark:bg-gray-600 text-gray-400'
                     : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                 }`}
@@ -136,6 +142,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
           )}
         </div>
       </div>
+      )}
     </Modal>
   );
 };

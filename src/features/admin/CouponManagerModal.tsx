@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { Ticket, Plus, Trash2, Calendar } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface CouponManagerModalProps {
   isOpen: boolean;
@@ -21,6 +20,8 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
   const [coupons, setCoupons] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createError, setCreateError] = useState('');
   
   // New Coupon Form
   const [code, setCode] = useState('');
@@ -34,12 +35,14 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
   
   // Confirm Delete
   const [couponToDelete, setCouponToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       fetchCoupons();
     } else {
       setIsCreating(false);
+      setCouponToDelete(null);
       resetForm();
     }
   }, [isOpen]);
@@ -66,35 +69,40 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
     setStartDate(null);
     setEndDate(null);
     setLimitPerRoom(false);
+    setCreateError('');
   };
 
   const createCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code || !discountValue) return;
+    if (!code || !discountValue || isSubmitting) return;
 
-    setIsLoading(true);
-    const { data, error } = await supabase
-      .from('coupons')
-      .insert([{
-        code: code.toUpperCase().trim(),
-        discount_type: discountType,
-        discount_value: parseFloat(discountValue),
-        min_purchase: minPurchase ? parseFloat(minPurchase) : 0,
-        usage_limit: usageLimit ? parseInt(usageLimit) : null,
-        start_date: startDate ? startDate.toISOString() : null,
-        end_date: endDate ? endDate.toISOString() : null,
-        limit_per_room: limitPerRoom
-      }])
-      .select();
+    setIsSubmitting(true);
+    setCreateError('');
+    try {
+      const { data, error } = await supabase
+        .from('coupons')
+        .insert([{
+          code: code.toUpperCase().trim(),
+          discount_type: discountType,
+          discount_value: parseFloat(discountValue),
+          min_purchase: minPurchase ? parseFloat(minPurchase) : 0,
+          usage_limit: usageLimit ? parseInt(usageLimit) : null,
+          start_date: startDate ? startDate.toISOString() : null,
+          end_date: endDate ? endDate.toISOString() : null,
+          limit_per_room: limitPerRoom
+        }])
+        .select();
 
-    if (!error && data) {
-      setCoupons([data[0], ...coupons]);
-      setIsCreating(false);
-      resetForm();
-    } else {
-      alert(isEn ? 'Failed to create coupon, code might already exist.' : 'สร้างคูปองไม่สำเร็จ โค้ดนี้อาจมีอยู่แล้ว');
+      if (!error && data) {
+        setCoupons([data[0], ...coupons]);
+        setIsCreating(false);
+        resetForm();
+      } else {
+        setCreateError(isEn ? 'Failed to create coupon, code might already exist.' : 'สร้างคูปองไม่สำเร็จ โค้ดนี้อาจมีอยู่แล้ว');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsLoading(false);
   };
 
   const toggleStatus = async (id: string, currentStatus: boolean) => {
@@ -103,10 +111,15 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
   };
 
   const confirmDelete = async () => {
-    if (!couponToDelete) return;
-    setCoupons(prev => prev.filter(c => c.id !== couponToDelete));
-    await supabase.from('coupons').delete().eq('id', couponToDelete);
-    setCouponToDelete(null);
+    if (!couponToDelete || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await supabase.from('coupons').delete().eq('id', couponToDelete);
+      setCoupons(prev => prev.filter(c => c.id !== couponToDelete));
+      setCouponToDelete(null);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -195,145 +208,154 @@ export const CouponManagerModal: React.FC<CouponManagerModalProps> = ({ isOpen, 
       </div>
 
       {/* Modals */}
-      <AnimatePresence>
-        {isCreating && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60" onClick={() => setIsCreating(false)} />
-            <motion.div initial={{ scale: 0.95, y: 20, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.95, y: 20, opacity: 0 }} className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] w-full max-w-[380px] relative z-10 shadow-lg border border-gray-100 dark:border-gray-700">
-              <h3 className="font-extrabold text-xl mb-6 text-gray-900 dark:text-white flex items-center gap-2">
-                <Ticket className="w-6 h-6 text-orange-500" />
-                {isEn ? 'New Coupon' : 'คูปองส่วนลดใหม่'}
-              </h3>
-              
-              <form onSubmit={createCoupon} className="flex flex-col gap-4">
-                <Input
-                  placeholder={isEn ? 'CODE (e.g. NEW20)' : 'โค้ดส่วนลด (เช่น NEW20)'}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  required
-                  className="w-full !rounded-2xl bg-gray-50 dark:bg-gray-900 border-transparent focus:border-orange-500 focus:ring-orange-500/20"
+      <Modal
+        isOpen={isCreating}
+        onClose={() => setIsCreating(false)}
+        disableClose={isSubmitting}
+        size="sm"
+        title={
+          <span className="flex items-center gap-2">
+            <Ticket className="w-5 h-5 text-orange-500" />
+            <span>{isEn ? 'New Coupon' : 'คูปองส่วนลดใหม่'}</span>
+          </span>
+        }
+      >
+        <form onSubmit={createCoupon} className="flex flex-col gap-4">
+          {createError && (
+            <div className="text-red-500 text-sm font-bold p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-xl">
+              {createError}
+            </div>
+          )}
+
+          <Input
+            placeholder={isEn ? 'CODE (e.g. NEW20)' : 'โค้ดส่วนลด (เช่น NEW20)'}
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            required
+            className="w-full !rounded-2xl bg-gray-50 dark:bg-gray-900 border-transparent focus:border-orange-500 focus:ring-orange-500/20"
+          />
+          
+          <div className="flex gap-3">
+            <select 
+              value={discountType}
+              onChange={(e) => setDiscountType(e.target.value)}
+              className="bg-gray-50 dark:bg-gray-900 border-transparent rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none w-1/3 text-gray-900 dark:text-white font-medium"
+            >
+              <option value="fixed">{isEn ? 'THB' : 'บาท'}</option>
+              <option value="percent">%</option>
+            </select>
+            <Input
+              type="number"
+              placeholder={isEn ? 'Amount' : 'จำนวนส่วนลด'}
+              value={discountValue}
+              onChange={(e) => setDiscountValue(e.target.value)}
+              required
+              min="1"
+              className="flex-1 !rounded-2xl bg-gray-50 dark:bg-gray-900 border-transparent focus:border-orange-500 focus:ring-orange-500/20"
+            />
+          </div>
+
+          <div className="flex gap-3">
+            <Input
+              type="number"
+              placeholder={isEn ? 'Min. Purchase' : 'ยอดซื้อขั้นต่ำ (ไม่บังคับ)'}
+              value={minPurchase}
+              onChange={(e) => setMinPurchase(e.target.value)}
+              className="flex-1 !rounded-2xl bg-gray-50 dark:bg-gray-900 border-transparent focus:border-orange-500 focus:ring-orange-500/20 text-sm"
+            />
+            <Input
+              type="number"
+              placeholder={isEn ? 'Limit' : 'จำกัดสิทธิ์ (ไม่บังคับ)'}
+              value={usageLimit}
+              onChange={(e) => setUsageLimit(e.target.value)}
+              className="flex-1 !rounded-2xl bg-gray-50 dark:bg-gray-900 border-transparent focus:border-orange-500 focus:ring-orange-500/20 text-sm"
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-3">
+            <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+              <span className="text-[11px] text-gray-500 font-bold ml-1 sm:ml-2">{isEn ? 'Start Date (Optional)' : 'เริ่มวันที่ (ไม่บังคับ)'}</span>
+              <div className="relative w-full">
+                <DatePicker
+                  selected={startDate}
+                  onChange={(date: Date | null) => setStartDate(date)}
+                  dateFormat="dd/MM/yyyy"
+                  placeholderText={isEn ? "dd/mm/yyyy" : "วว/ดด/ปปปป"}
+                  withPortal
+                  onFocus={(e) => e.target.blur()}
+                  className="w-full text-sm pl-11 pr-4 !rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-transparent focus:bg-white dark:focus:bg-gray-800 focus:border-gray-900 dark:focus:border-white focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 h-12 outline-none transition-all text-gray-900 dark:text-white"
                 />
-                
-                <div className="flex gap-3">
-                  <select 
-                    value={discountType}
-                    onChange={(e) => setDiscountType(e.target.value)}
-                    className="bg-gray-50 dark:bg-gray-900 border-transparent rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none w-1/3 text-gray-900 dark:text-white font-medium"
-                  >
-                    <option value="fixed">{isEn ? 'THB' : 'บาท'}</option>
-                    <option value="percent">%</option>
-                  </select>
-                  <Input
-                    type="number"
-                    placeholder={isEn ? 'Amount' : 'จำนวนส่วนลด'}
-                    value={discountValue}
-                    onChange={(e) => setDiscountValue(e.target.value)}
-                    required
-                    min="1"
-                    className="flex-1 !rounded-2xl bg-gray-50 dark:bg-gray-900 border-transparent focus:border-orange-500 focus:ring-orange-500/20"
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <Input
-                    type="number"
-                    placeholder={isEn ? 'Min. Purchase' : 'ยอดซื้อขั้นต่ำ (ไม่บังคับ)'}
-                    value={minPurchase}
-                    onChange={(e) => setMinPurchase(e.target.value)}
-                    className="flex-1 !rounded-2xl bg-gray-50 dark:bg-gray-900 border-transparent focus:border-orange-500 focus:ring-orange-500/20 text-sm"
-                  />
-                  <Input
-                    type="number"
-                    placeholder={isEn ? 'Limit' : 'จำกัดสิทธิ์ (ไม่บังคับ)'}
-                    value={usageLimit}
-                    onChange={(e) => setUsageLimit(e.target.value)}
-                    className="flex-1 !rounded-2xl bg-gray-50 dark:bg-gray-900 border-transparent focus:border-orange-500 focus:ring-orange-500/20 text-sm"
-                  />
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-3">
-                  <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-                    <span className="text-[11px] text-gray-500 font-bold ml-1 sm:ml-2">{isEn ? 'Start Date (Optional)' : 'เริ่มวันที่ (ไม่บังคับ)'}</span>
-                    <div className="relative w-full">
-                      <DatePicker
-                        selected={startDate}
-                        onChange={(date: Date | null) => setStartDate(date)}
-                        dateFormat="dd/MM/yyyy"
-                        placeholderText={isEn ? "dd/mm/yyyy" : "วว/ดด/ปปปป"}
-                        withPortal
-                        onFocus={(e) => e.target.blur()}
-                        className="w-full text-sm pl-11 pr-4 !rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-transparent focus:bg-white dark:focus:bg-gray-800 focus:border-gray-900 dark:focus:border-white focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 h-12 outline-none transition-all text-gray-900 dark:text-white"
-                      />
-                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    </div>
-                  </div>
-                  <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-                    <span className="text-[11px] text-gray-500 font-bold ml-1 sm:ml-2">{isEn ? 'End Date (Optional)' : 'หมดอายุ (ไม่บังคับ)'}</span>
-                    <div className="relative w-full">
-                      <DatePicker
-                        selected={endDate}
-                        onChange={(date: Date | null) => setEndDate(date)}
-                        dateFormat="dd/MM/yyyy"
-                        placeholderText={isEn ? "dd/mm/yyyy" : "วว/ดด/ปปปป"}
-                        minDate={startDate || undefined}
-                        withPortal
-                        onFocus={(e) => e.target.blur()}
-                        className="w-full text-sm pl-11 pr-4 !rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-transparent focus:bg-white dark:focus:bg-gray-800 focus:border-gray-900 dark:focus:border-white focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 h-12 outline-none transition-all text-gray-900 dark:text-white"
-                      />
-                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    </div>
-                  </div>
-                </div>
-
-                <label className="flex items-center gap-2 cursor-pointer p-2">
-                  <input
-                    type="checkbox"
-                    checked={limitPerRoom}
-                    onChange={(e) => setLimitPerRoom(e.target.checked)}
-                    className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{isEn ? 'Limit 1 use per room' : 'จำกัดการใช้ 1 สิทธิ์ต่อห้อง'}</span>
-                </label>
-
-                <div className="flex gap-3 pt-4 mt-2">
-                  <Button 
-                    type="button"
-                    variant="secondary" 
-                    onClick={() => setIsCreating(false)}
-                    className="flex-1 !rounded-2xl py-3.5 font-bold !bg-gray-100 hover:!bg-gray-200 dark:!bg-gray-800 dark:hover:!bg-gray-700 !text-gray-700 dark:!text-gray-300"
-                  >
-                    {isEn ? 'Cancel' : 'ยกเลิก'}
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    isLoading={isLoading}
-                    className="flex-1 !rounded-2xl py-3.5 font-bold shadow-lg shadow-orange-500/30 !bg-orange-500 hover:!bg-orange-600 !text-white"
-                  >
-                    {isEn ? 'Save' : 'บันทึก'}
-                  </Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-
-        {couponToDelete && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60" onClick={() => setCouponToDelete(null)} />
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-gray-800 p-6 rounded-3xl w-full max-w-[320px] relative z-10 text-center shadow-md">
-              <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-7 h-7" />
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
-              <h3 className="font-bold text-lg mb-2 dark:text-white">{isEn ? 'Delete Coupon?' : 'ลบคูปองนี้?'}</h3>
-              <p className="text-gray-500 text-sm mb-6">{isEn ? 'This action cannot be undone.' : 'การกระทำนี้ไม่สามารถย้อนกลับได้'}</p>
-              <div className="flex gap-3">
-                <Button variant="secondary" onClick={() => setCouponToDelete(null)} className="flex-1 !rounded-xl">{isEn ? 'Cancel' : 'ยกเลิก'}</Button>
-                <Button onClick={confirmDelete} className="flex-1 !rounded-xl !bg-red-500 hover:!bg-red-600">{isEn ? 'Delete' : 'ลบทิ้ง'}</Button>
+            </div>
+            <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+              <span className="text-[11px] text-gray-500 font-bold ml-1 sm:ml-2">{isEn ? 'End Date (Optional)' : 'หมดอายุ (ไม่บังคับ)'}</span>
+              <div className="relative w-full">
+                <DatePicker
+                  selected={endDate}
+                  onChange={(date: Date | null) => setEndDate(date)}
+                  dateFormat="dd/MM/yyyy"
+                  placeholderText={isEn ? "dd/mm/yyyy" : "วว/ดด/ปปปป"}
+                  minDate={startDate || undefined}
+                  withPortal
+                  onFocus={(e) => e.target.blur()}
+                  className="w-full text-sm pl-11 pr-4 !rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-transparent focus:bg-white dark:focus:bg-gray-800 focus:border-gray-900 dark:focus:border-white focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 h-12 outline-none transition-all text-gray-900 dark:text-white"
+                />
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
-            </motion.div>
+            </div>
           </div>
-        )}
-      </AnimatePresence>
+
+          <label className="flex items-center gap-2 cursor-pointer p-2">
+            <input
+              type="checkbox"
+              checked={limitPerRoom}
+              onChange={(e) => setLimitPerRoom(e.target.checked)}
+              className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">{isEn ? 'Limit 1 use per room' : 'จำกัดการใช้ 1 สิทธิ์ต่อห้อง'}</span>
+          </label>
+
+          <div className="flex gap-3 pt-4 mt-2">
+            <Button 
+              type="button"
+              variant="secondary" 
+              onClick={() => setIsCreating(false)}
+              disabled={isSubmitting}
+              className="flex-1 !rounded-2xl py-3.5 font-bold !bg-gray-100 hover:!bg-gray-200 dark:!bg-gray-800 dark:hover:!bg-gray-700 !text-gray-700 dark:!text-gray-300"
+            >
+              {isEn ? 'Cancel' : 'ยกเลิก'}
+            </Button>
+            <Button 
+              type="submit" 
+              isLoading={isSubmitting}
+              className="flex-1 !rounded-2xl py-3.5 font-bold shadow-lg shadow-orange-500/30 !bg-orange-500 hover:!bg-orange-600 !text-white"
+            >
+              {isEn ? 'Save' : 'บันทึก'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={!!couponToDelete}
+        onClose={() => setCouponToDelete(null)}
+        disableClose={isDeleting}
+        showCloseButton={false}
+        size="xs"
+        bodyClassName="p-6 text-center"
+        ariaLabel={isEn ? 'Delete Coupon?' : 'ลบคูปองนี้?'}
+      >
+        <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Trash2 className="w-7 h-7" />
+        </div>
+        <h3 className="font-bold text-lg mb-2 dark:text-white">{isEn ? 'Delete Coupon?' : 'ลบคูปองนี้?'}</h3>
+        <p className="text-gray-500 text-sm mb-6">{isEn ? 'This action cannot be undone.' : 'การกระทำนี้ไม่สามารถย้อนกลับได้'}</p>
+        <div className="flex gap-3">
+          <Button variant="secondary" onClick={() => setCouponToDelete(null)} disabled={isDeleting} className="flex-1 !rounded-xl">{isEn ? 'Cancel' : 'ยกเลิก'}</Button>
+          <Button onClick={confirmDelete} isLoading={isDeleting} className="flex-1 !rounded-xl !bg-red-500 hover:!bg-red-600">{isEn ? 'Delete' : 'ลบทิ้ง'}</Button>
+        </div>
+      </Modal>
     </Modal>
   );
 };

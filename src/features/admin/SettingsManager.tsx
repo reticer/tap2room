@@ -24,6 +24,8 @@ export const SettingsManager: React.FC = () => {
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [activities, setActivities] = useState<any[]>([]);
   const [isLoadingActivities, setIsLoadingActivities] = useState(false);
+  const [isClearLogConfirmOpen, setIsClearLogConfirmOpen] = useState(false);
+  const [isClearingLogs, setIsClearingLogs] = useState(false);
   
   // Password change states
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -139,18 +141,24 @@ export const SettingsManager: React.FC = () => {
     setIsActivityModalOpen(true);
   };
 
-  const handleClearActivityLog = async () => {
-    if (confirm(isEn ? 'Are you sure you want to clear all activity logs?' : 'คุณแน่ใจหรือไม่ว่าต้องการลบประวัติกิจกรรมทั้งหมด?')) {
+  const confirmClearActivityLog = async () => {
+    if (isClearingLogs) return;
+    setIsClearingLogs(true);
+    try {
       const { error } = await supabase.from('activity_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       if (!error) {
         setActivities([]);
+        setIsClearLogConfirmOpen(false);
       } else {
+        setIsClearLogConfirmOpen(false);
         setMessageModal({
           isOpen: true,
           title: isEn ? 'Error' : 'ผิดพลาด',
           message: error.message
         });
       }
+    } finally {
+      setIsClearingLogs(false);
     }
   };
 
@@ -371,7 +379,7 @@ export const SettingsManager: React.FC = () => {
             <span>{isEn ? "Activity Log" : "ประวัติกิจกรรม"}</span>
             {activities.length > 0 && (
               <button 
-                onClick={handleClearActivityLog}
+                onClick={() => setIsClearLogConfirmOpen(true)}
                 className="flex items-center gap-1 text-[11px] font-semibold text-red-500 hover:text-red-600 transition-colors bg-red-50 dark:bg-red-900/20 px-2.5 py-1 rounded-lg"
               >
                 <Trash2 className="w-3 h-3" />
@@ -418,10 +426,46 @@ export const SettingsManager: React.FC = () => {
         </div>
       </Modal>
 
+      {/* Clear Activity Log Confirmation Modal */}
+      <Modal
+        isOpen={isClearLogConfirmOpen}
+        onClose={() => setIsClearLogConfirmOpen(false)}
+        disableClose={isClearingLogs}
+        size="xs"
+        title={isEn ? 'Clear Activity Log' : 'ลบประวัติกิจกรรม'}
+      >
+        <div className="flex flex-col gap-5 pt-1">
+          <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">
+            {isEn ? 'Are you sure you want to clear all activity logs?' : 'คุณแน่ใจหรือไม่ว่าต้องการลบประวัติกิจกรรมทั้งหมด?'}
+          </p>
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              className="flex-1"
+              onClick={() => setIsClearLogConfirmOpen(false)}
+              disabled={isClearingLogs}
+            >
+              {isEn ? 'Cancel' : 'ยกเลิก'}
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              className="flex-1"
+              onClick={confirmClearActivityLog}
+              isLoading={isClearingLogs}
+            >
+              {isEn ? 'Delete' : 'ลบทิ้ง'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Password Modal */}
       <Modal 
         isOpen={isPasswordModalOpen} 
         onClose={() => !isChangingPassword && setIsPasswordModalOpen(false)} 
+        disableClose={isChangingPassword}
         title={isEn ? 'Change Password' : 'เปลี่ยนรหัสผ่าน'}
       >
         <form onSubmit={handleChangePassword} className="flex flex-col gap-4">

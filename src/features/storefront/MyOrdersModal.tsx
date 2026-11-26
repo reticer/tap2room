@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ClipboardList, CheckCircle2, PackageSearch, Loader2, Package, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
+import { Modal } from '../../components/ui/Modal';
 import { supabase } from '../../services/supabaseClient';
 
 interface MyOrdersModalProps {
@@ -45,7 +45,7 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ isOpen, onClose })
               setActiveTrackingCodes(codes);
             }
           }
-        } catch (e) {
+        } catch {
           // Fallback for old single string format
           if (storedStr && !storedStr.startsWith('[')) {
             setActiveTrackingCodes([storedStr]);
@@ -150,10 +150,6 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ isOpen, onClose })
 
   // 4. (Removed auto-cleanup of completed orders as per user request)
 
-
-
-  if (typeof window === 'undefined') return null;
-
   // Timeline UI Helper
   const getStatusStep = (status: string) => {
     switch(status) {
@@ -165,45 +161,23 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ isOpen, onClose })
     }
   };
 
-  return createPortal(
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] flex flex-col justify-end sm:items-center sm:justify-center">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/70"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 100 }}
-            transition={{ type: "spring", duration: 0.5, bounce: 0.1 }}
-            className="bg-gray-50 dark:bg-gray-900 rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-lg relative z-10 shadow-lg flex flex-col h-[85vh] sm:h-[80vh] overflow-hidden"
-          >
-            {/* Header */}
-            <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-gray-900 z-10 sticky top-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center border border-orange-100 dark:border-orange-800">
-                  <Package className="w-5 h-5 text-orange-500" />
-                </div>
-                <h3 className="font-bold text-xl text-gray-900 dark:text-white">
-                  {isEn ? 'Track Orders' : 'ติดตามออเดอร์'}
-                </h3>
-              </div>
-              <button
-                onClick={onClose}
-                className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto relative p-4 sm:p-6 pb-20">
-              {isLoading && ordersData.length === 0 ? (
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="lg"
+      panelClassName="h-[82vh]"
+      bodyClassName="flex-1 min-h-0 overflow-y-auto relative p-4 sm:p-6 pb-20"
+      title={
+        <span className="flex items-center gap-3">
+          <span className="w-9 h-9 rounded-full bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center border border-orange-100 dark:border-orange-800 shrink-0">
+            <Package className="w-5 h-5 text-orange-500" />
+          </span>
+          <span>{isEn ? 'Track Orders' : 'ติดตามออเดอร์'}</span>
+        </span>
+      }
+    >
+      {isLoading && ordersData.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
                   <Loader2 className="w-10 h-10 text-orange-500 animate-spin mb-4" />
                   <p className="text-gray-500 font-medium">{isEn ? 'Searching...' : 'กำลังค้นหาออเดอร์...'}</p>
@@ -424,11 +398,6 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ isOpen, onClose })
                   </p>
                 </div>
               )}
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>,
-    document.body
+    </Modal>
   );
 };

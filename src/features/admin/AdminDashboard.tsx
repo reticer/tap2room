@@ -7,7 +7,8 @@ import { OrdersManager } from './OrdersManager';
 import { ProductsManager } from './ProductsManager';
 import { SettingsManager } from './SettingsManager';
 import { AnalyticsManager } from './AnalyticsManager';
-import { AnimatePresence, motion } from 'framer-motion';
+import { Modal } from '../../components/ui/Modal';
+import { AnimatePresence } from 'framer-motion';
 import { BarChart3, X, Clock } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -220,43 +221,22 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Analytics Modal (Island) */}
-      <AnimatePresence>
-        {isAnalyticsOpen && (
-          <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center sm:p-4">
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              className="absolute inset-0 bg-black/60"
-              onClick={() => setIsAnalyticsOpen(false)}
-            />
-            <motion.div 
-              initial={{ opacity: 0, y: '100%', scale: 0.95 }} 
-              animate={{ opacity: 1, y: 0, scale: 1 }} 
-              exit={{ opacity: 0, y: '100%', scale: 0.95 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="bg-gray-50 dark:bg-gray-900 w-full md:max-w-4xl h-[90vh] md:h-[85vh] rounded-t-3xl md:rounded-3xl shadow-lg relative z-10 overflow-hidden flex flex-col"
-            >
-              <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 z-20">
-                <h2 className="text-xl font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
-                  <BarChart3 className="w-6 h-6 text-orange-500" />
-                  {isEn ? 'Sales Analytics' : 'สรุปยอดขาย'}
-                </h2>
-                <button 
-                  onClick={() => setIsAnalyticsOpen(false)}
-                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto pb-8">
-                <AnalyticsManager />
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Analytics Modal */}
+      <Modal
+        isOpen={isAnalyticsOpen}
+        onClose={() => setIsAnalyticsOpen(false)}
+        size="4xl"
+        panelClassName="h-[85vh]"
+        bodyClassName="flex-1 min-h-0 overflow-y-auto p-0 pb-8"
+        title={
+          <span className="flex items-center gap-2">
+            <BarChart3 className="w-6 h-6 text-orange-500" />
+            <span>{isEn ? 'Sales Analytics' : 'สรุปยอดขาย'}</span>
+          </span>
+        }
+      >
+        <AnalyticsManager />
+      </Modal>
 
       <div className="flex p-4 md:px-8 gap-3 max-w-2xl mx-auto">
         <button 

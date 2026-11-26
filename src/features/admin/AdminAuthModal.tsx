@@ -129,7 +129,7 @@ export const AdminAuthModal: React.FC<{ isOpen: boolean; onClose: () => void }> 
 
       onClose();
       navigate('/admin');
-    } catch (err) {
+    } catch {
       // Error is handled above
     } finally {
       setIsLoading(false);
@@ -143,7 +143,7 @@ export const AdminAuthModal: React.FC<{ isOpen: boolean; onClose: () => void }> 
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t('admin_login')}>
+    <Modal isOpen={isOpen} onClose={onClose} disableClose={isLoading} title={t('admin_login')}>
       <form onSubmit={handleLogin} className="flex flex-col gap-4">
         
         {isLocked && lockCountdown !== null && (

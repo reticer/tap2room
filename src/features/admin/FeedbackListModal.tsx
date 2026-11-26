@@ -17,6 +17,7 @@ export const FeedbackListModal: React.FC<FeedbackListModalProps> = ({ isOpen, on
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [feedbackToDelete, setFeedbackToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -51,11 +52,15 @@ export const FeedbackListModal: React.FC<FeedbackListModalProps> = ({ isOpen, on
   };
 
   const confirmDelete = async () => {
-    if (!feedbackToDelete) return;
-    
-    setFeedbacks(prev => prev.filter(f => f.id !== feedbackToDelete));
-    await supabase.from('customer_feedbacks').delete().eq('id', feedbackToDelete);
-    setFeedbackToDelete(null);
+    if (!feedbackToDelete || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await supabase.from('customer_feedbacks').delete().eq('id', feedbackToDelete);
+      setFeedbacks(prev => prev.filter(f => f.id !== feedbackToDelete));
+      setFeedbackToDelete(null);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -132,6 +137,8 @@ export const FeedbackListModal: React.FC<FeedbackListModalProps> = ({ isOpen, on
       <Modal 
         isOpen={!!feedbackToDelete} 
         onClose={() => setFeedbackToDelete(null)}
+        disableClose={isDeleting}
+        size="xs"
         title={isEn ? "Delete Feedback" : "ยืนยันการลบ"}
       >
         <div className="flex flex-col gap-6 pt-2">
@@ -139,10 +146,10 @@ export const FeedbackListModal: React.FC<FeedbackListModalProps> = ({ isOpen, on
             {isEn ? "Are you sure you want to delete this feedback?" : "คุณแน่ใจหรือไม่ว่าต้องการลบข้อเสนอแนะนี้?"}
           </p>
           <div className="flex gap-3">
-            <Button variant="secondary" className="flex-1" onClick={() => setFeedbackToDelete(null)}>
+            <Button variant="secondary" className="flex-1" onClick={() => setFeedbackToDelete(null)} disabled={isDeleting}>
               {isEn ? "Cancel" : "ยกเลิก"}
             </Button>
-            <Button className="flex-1 !bg-red-500 hover:!bg-red-600 border-none text-white shadow-sm" onClick={confirmDelete}>
+            <Button className="flex-1 !bg-red-500 hover:!bg-red-600 border-none text-white shadow-sm" onClick={confirmDelete} isLoading={isDeleting}>
               {isEn ? "Delete" : "ลบเลย"}
             </Button>
           </div>

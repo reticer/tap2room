@@ -58,8 +58,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
     <Modal 
       isOpen={isOpen} 
       onClose={onClose} 
+      disableClose={isSubmitting}
       title={isEn ? "Suggest a Product" : "แนะนำสินค้าใหม่"}
-      bgClass="bg-[#FFFDF9] dark:bg-gray-900"
     >
       {isSuccess ? (
         <div className="flex flex-col items-center justify-center py-8 text-center px-4">
